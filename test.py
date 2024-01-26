@@ -1,5 +1,14 @@
+import numpy as np 
 
-print('Hello')
+
+x = np.random.normal(size= 1000)
+
+print(x[:10])
+
+
+
+
+
 
 
 
