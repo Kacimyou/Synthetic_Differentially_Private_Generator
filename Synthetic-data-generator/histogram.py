@@ -1,78 +1,38 @@
 import numpy as np
 
-
-import numpy as np
-
-def modified_histogram_estimator(X, m_per_axis):
+def modified_histogram_estimator(X, h=0.1, adaptative = True):
     """
     Computes the normalized histogram estimator for multidimensional data with a specified number of bins per axis.
 
     Parameters:
     - X: numpy array, shape (n, d), where n is the number of data points and d is the dimensionality.
-    - m_per_axis: int, the number of bins per axis.
+    - h: float, binwidth, where 0 < h < 1. If None, adaptative binwidth will be used.
+    - adaptive: bool, whether to use adaptive binwidth or not.
 
     Returns:
     - fbm: numpy array, the normalized histogram estimator values.
-    - h: float, the binwidth.
-    """
 
+    """
+    
+    assert h<1 and h>0 , "Error: h must be between 0 and 1"
+    
+    
     # Calculate the dimensions of the data
     n, d = X.shape
 
-    # Calculate the binwidth based on the given number of bins per axis
-    h = 1 / m_per_axis
-
-    # Initialize the histogram estimator
-    fbm_shape = (m_per_axis,) * d
-    fbm = np.zeros(fbm_shape)
-
-    # Iterate through each row as a separate data point
-    for i in range(n):
-        # Determine the bin index for the current data point in each dimension
-        bin_indices = tuple(int(np.floor(X[i, j] / h)) for j in range(d))
-
-        # Update the histogram estimator
-        fbm[bin_indices] += 1
-
-    # Normalize the histogram estimator
-    fbm /= n
-
-    return fbm, h
-
-"""
-# Example usage:
-# Assuming X is a 3D array with data points
-X = np.random.rand(100, 3)  # Example data with d = 3
-m_per_axis = 10  # Example number of bins per axis
-fbm_estimator, binwidth = modified_histogram_estimator(X, m_per_axis)
-
-print(f"Number of bins per axis (m_per_axis): {m_per_axis}")
-print(f"Binwidth (h): {binwidth}")"""
-
-def modified_histogram_estimator(X):
-    """
-    Computes the normalized histogram estimator for multidimensional data with a specified number of bins per axis.
-
-    Parameters:
-    - X: numpy array, shape (n, d), where n is the number of data points and d is the dimensionality.
-
-    Returns:
-    - fbm: numpy array, the normalized histogram estimator values.
-    - h: float, the binwidth.
-    """
-
-
-
-    # Calculate the dimensions of the data
-    n, d = X.shape
-
-    
-    # Calculate the binwidth based on the given parameters
-    h = n**(-1 / (2 + d))
+    if adaptative == True:
+        # Calculate the binwidth based on the given parameters
+        h = n**(-1 / (2 + d))
     
     
-    # Calculate the number of bins per dimension
-    m_per_axis = int(1 / h)
+    
+    # Check if 1/h is an integer, and convert if necessary
+    m_inverse = 1 / h
+    if not m_inverse.is_integer():
+        m_per_axis = int(np.round(m_inverse))
+        print(f"Warning: 1/h is not an integer. Converting to the closest integer: {m_per_axis}")
+    else:
+        m_per_axis = int(m_inverse)
     
     # Initialize the histogram estimator
     fbm_shape = (m_per_axis,) * d
@@ -89,16 +49,16 @@ def modified_histogram_estimator(X):
     # Normalize the histogram estimator
     fbm /= n
 
-    return fbm, h
+    # Check if the sum of elements is equal to 1
+    assert np.isclose(np.sum(fbm), 1.0), "Error: Sum of histogram elements is not equal to 1."
+    
+    return fbm
 
 # Example usage:
 # Assuming X is a 3D array with data points
-X = np.random.rand(100, 3)  # Example data with d = 3
+X = np.random.rand(1000, 2)  # Example data with d = 2
 
-fbm_estimator, binwidth = modified_histogram_estimator(X)
-
-print(f"Number of bins per axis (m_per_axis): {int(1 / binwidth)}")
-print(f"Binwidth (h): {binwidth}")
-
+fbm_estimator = modified_histogram_estimator(X, adaptative= True)
+print(fbm_estimator)
 
 
