@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
+
 def histogram_estimator(X, h=0.1, adaptative = True):
     """
     Computes the normalized histogram estimator for multidimensional data with a specified number of bins per axis.
@@ -13,7 +14,7 @@ def histogram_estimator(X, h=0.1, adaptative = True):
     - adaptive: bool, whether to use adaptive binwidth or not.
 
     Returns:
-    - fbm: numpy array, the normalized histogram estimator values.
+    - hist: numpy array, the normalized histogram estimator values.
 
     """
     
@@ -42,10 +43,12 @@ def histogram_estimator(X, h=0.1, adaptative = True):
     # Check if 1/h is an integer, and convert if necessary
     m_inverse = 1 / h
     if not m_inverse.is_integer():
-        m_per_axis = int(np.round(m_inverse))
+        m_per_axis = int(np.ceil(m_inverse))
         print(f"Warning: 1/h is not an integer. Converting to the closest integer: {m_per_axis}")
     else:
         m_per_axis = int(m_inverse)
+        
+
     
 
     # Initialize the histogram estimator
@@ -81,7 +84,7 @@ def generate_data_from_hist(hist_estimator, m, rescaling_factor = [1,0], shuffle
     Generates synthetic data points according to the empirical distribution represented by fbm_estimator.
 
     Parameters:
-    - fbm_estimator: numpy array, the normalized histogram estimator representing the empirical distribution.
+    - hist_estimator: numpy array, the normalized histogram estimator representing the empirical distribution.
     - m: int, the number of data points to generate.
 
     Returns:
@@ -103,6 +106,7 @@ def generate_data_from_hist(hist_estimator, m, rescaling_factor = [1,0], shuffle
     binwidth = 1 / hist_estimator.shape[0]  # Assuming the binwidth is the same in each dimension
     
     # Create synthetic data points based on the multi-dimensional indices
+    
     if not(shuffle):
         synthetic_data = np.column_stack(
         [rescaling_factor[0] + ((idx+0.5) * binwidth * (rescaling_factor[1] - rescaling_factor[0])) for idx in multi_dim_indices]
@@ -118,3 +122,6 @@ def generate_data_from_hist(hist_estimator, m, rescaling_factor = [1,0], shuffle
         )
 
     return synthetic_data
+
+
+
