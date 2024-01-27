@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 
 #%%
-def modified_histogram_estimator(X, h=0.1, adaptative = True, privacy = None, delta = 0.1):
+def modified_histogram_estimator(X, h=0.1, adaptative = True):
     """
     Computes the normalized histogram estimator for multidimensional data with a specified number of bins per axis.
 
@@ -72,7 +72,6 @@ def modified_histogram_estimator(X, h=0.1, adaptative = True, privacy = None, de
     rescaling_factors = np.array([np.min(X, axis=0), np.max(X, axis=0)])
     
 
-  
     return fbm, rescaling_factors
 
 
@@ -114,6 +113,8 @@ def generate_data_from_fbm(fbm_estimator, m, rescaling_factor = [1,0], shuffle =
 
         #TODO FIX noise problem check with QQ PLOT
         print([(idx + noise) for idx, noise in zip(multi_dim_indices, random_noise)])
+        
+        
         # Use the list of random numbers within the list comprehension
         synthetic_data = np.column_stack(
             [rescaling_factor[0] + ((idx + noise) * binwidth * (rescaling_factor[1] - rescaling_factor[0])) for idx, noise in zip(multi_dim_indices, random_noise)]
@@ -138,7 +139,7 @@ def main(args_dict):
     # TODO : FIX data type problem with random.rand vs random.normal (chiant)
 
     # Perform histogram estimation
-    fbm_estimator, rescaling_factors = modified_histogram_estimator(X, adaptative=adaptative, privacy= "smoothing")
+    fbm_estimator, rescaling_factors = modified_histogram_estimator(X, adaptative=adaptative)
 
     # Generate synthetic data
     synthetic_data = generate_data_from_fbm(fbm_estimator, m, rescaling_factors, shuffle= True)
@@ -202,3 +203,6 @@ plt.show()
 print(synthetic_data_sorted[:10])
 
 # %%
+
+
+modified_histogram_estimator
