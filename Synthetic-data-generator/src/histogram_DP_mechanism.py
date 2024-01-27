@@ -2,6 +2,7 @@ import numpy as np
 from histogram_estimator import generate_data_from_hist, histogram_estimator
 
 
+
 def smooth_histogram(hist_estimator, delta):
     """
     Smooth a given histogram estimator to achieve differential privacy.
@@ -16,28 +17,47 @@ def smooth_histogram(hist_estimator, delta):
 
     # Apply differential privacy mechanism
 
-    print(hist_estimator.shape)
-    m = hist_estimator.shape[0]
+    bin_number = hist_estimator.shape[0]
     d = len(hist_estimator.shape)
-    print(m, d)
     
-    
-    private_hist_estimator = (1 - delta) * hist_estimator + delta/m**d
+    dp_hist = (1 - delta) * hist_estimator + delta/bin_number**d
 
     # Check if the sum of elements is equal to 1
-
-    print(private_hist_estimator)
-    assert np.isclose( np.sum(private_hist_estimator), 1.0), "Error: Sum of private histogram elements is not equal to 1."
+    assert np.isclose( np.sum(dp_hist), 1.0), "Error: Sum of private histogram elements is not equal to 1."
     
-    return private_hist_estimator
+    return dp_hist
 
+def perturbed_histogram(hist_estimator, alpha, n):
+    
+    """
+    Add Laplacian noise to each component of the histogram estimator.
 
-X = np.random.normal(loc=0, scale=1, size=(1000, 2))  # Example data with d = 2
+    Parameters:
+    - hist_estimator: numpy array, the normalized histogram estimator.
+    - alpha: float, privacy parameter.
+    - n : int, number of samples.
 
-# Perform histogram estimation
-hist_estimator, rescaling_factors = histogram_estimator(X, adaptative=True)
+    Returns:
+    - dp_hist: numpy array, differentially private histogram estimator.
+    """
+    #sensitivity = 1 / n  # Sensitivity of the histogram estimator
 
-# Generate synthetic data
-synthetic_data = generate_data_from_hist(hist_estimator, 1000, rescaling_factors, shuffle= True)
+    # Generate Laplace noise for each component
+    laplace_noise = np.random.laplace(scale= 8/ alpha^2 , size=hist_estimator.shape)
 
-DP_hist = smooth_histogram(hist_estimator, delta = 0.2)
+    # Add Laplace noise to the histogram estimator
+    dp_hist = hist_estimator + laplace_noise / n
+
+    # Clip to ensure non-negativity
+    dp_hist = np.clip(dp_hist, 0, np.inf)
+
+    # Normalize the differentially private histogram estimator
+    dp_hist /= np.sum(dp_hist)
+    
+    # Check if the sum of elements is equal to 1
+    assert np.isclose( np.sum(dp_hist), 1.0), "Error: Sum of private histogram elements is not equal to 1."
+    
+
+    return dp_hist
+    
+    
