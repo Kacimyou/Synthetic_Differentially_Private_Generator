@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 
 #%%
-def modified_histogram_estimator(X, h=0.1, adaptative = True):
+def modified_histogram_estimator(X, h=0.1, adaptative = True, privacy = None, delta = 0.1):
     """
     Computes the normalized histogram estimator for multidimensional data with a specified number of bins per axis.
 
@@ -60,15 +60,19 @@ def modified_histogram_estimator(X, h=0.1, adaptative = True):
         # Update the histogram estimator
         fbm[bin_indices] += 1
 
+
     # Normalize the histogram estimator
     fbm /= n
+    #TODO CONTINUE the implementation of privacy options
 
     # Check if the sum of elements is equal to 1
     assert np.isclose(np.sum(fbm), 1.0), "Error: Sum of histogram elements is not equal to 1."
     
     
     rescaling_factors = np.array([np.min(X, axis=0), np.max(X, axis=0)])
+    
 
+  
     return fbm, rescaling_factors
 
 
@@ -93,6 +97,8 @@ def generate_data_from_fbm(fbm_estimator, m, rescaling_factor = [1,0], shuffle =
 
     # Convert the flat indices to multi-dimensional indices
     multi_dim_indices = np.unravel_index(indices, fbm_estimator.shape)
+    
+
 
     # Get the binwidth from the fbm_estimator
     binwidth = 1 / fbm_estimator.shape[0]  # Assuming the binwidth is the same in each dimension
@@ -104,14 +110,15 @@ def generate_data_from_fbm(fbm_estimator, m, rescaling_factor = [1,0], shuffle =
     )
     if shuffle:
         # Generate a list of random numbers
-        random_noise = np.random.uniform(0, 1, size=len(multi_dim_indices[0]))
+        random_noise = np.random.uniform(0, 1, size=m)
 
+        #TODO FIX noise problem check with QQ PLOT
+        print([(idx + noise) for idx, noise in zip(multi_dim_indices, random_noise)])
         # Use the list of random numbers within the list comprehension
         synthetic_data = np.column_stack(
-    [rescaling_factor[0] + ((idx + noise) * binwidth * (rescaling_factor[1] - rescaling_factor[0])) for idx, noise in zip(multi_dim_indices, random_noise)]
-)
-    synthetic_idx = np.column_stack([ idx  for idx in multi_dim_indices])
-
+            [rescaling_factor[0] + ((idx + noise) * binwidth * (rescaling_factor[1] - rescaling_factor[0])) for idx, noise in zip(multi_dim_indices, random_noise)]
+        )
+    
 
     return synthetic_data
 
@@ -128,13 +135,13 @@ def main(args_dict):
   
     X = np.random.normal(loc=0, scale=1, size=(n, d))  # Example data with d = 2
     #X = np.random.rand(10000, 2)
-    
+    # TODO : FIX data type problem with random.rand vs random.normal (chiant)
 
     # Perform histogram estimation
-    fbm_estimator, rescaling_factors = modified_histogram_estimator(X, adaptative=adaptative)
+    fbm_estimator, rescaling_factors = modified_histogram_estimator(X, adaptative=adaptative, privacy= "smoothing")
 
     # Generate synthetic data
-    synthetic_data = generate_data_from_fbm(fbm_estimator, m, rescaling_factors)
+    synthetic_data = generate_data_from_fbm(fbm_estimator, m, rescaling_factors, shuffle= True)
 
 
     bin_number = int( fbm_estimator.shape[0])
@@ -156,8 +163,9 @@ def main(args_dict):
     return X, synthetic_data, fbm_estimator, rescaling_factors
 
 # Example usage of the main function
-args_dict = {'adaptative': True, 'm': 5000, 'd': 1, 'n': 10000}
+args_dict = {'adaptative': True, 'm': 500, 'd': 1, 'n': 500}
 X, synthetic_data, fbm_estimator, rescaling_factors = main(args_dict)
+
 
 
 # %%
@@ -165,9 +173,11 @@ X, synthetic_data, fbm_estimator, rescaling_factors = main(args_dict)
 synthetic_data_2 = generate_data_from_fbm(fbm_estimator, 10000, rescaling_factors, shuffle= True)
 
 plt.hist(synthetic_data_2 , bins= 22)
+print(len(np.unique(synthetic_data_2)))
 
 
 # %%
+
 
 
 
@@ -188,5 +198,7 @@ plt.title('QQ Plot of Synthetic Data against Standard Normal Distribution')
 plt.xlabel('Quantiles of Synthetic Data')
 plt.ylabel('Quantiles of Standard Normal Distribution')
 plt.show()
+
+print(synthetic_data_sorted[:10])
 
 # %%
