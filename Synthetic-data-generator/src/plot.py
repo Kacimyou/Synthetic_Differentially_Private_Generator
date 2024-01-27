@@ -1,7 +1,7 @@
 #%%
 import numpy as np
 import matplotlib.pyplot as plt 
-from histogram_estimator import generate_data_from_fbm, modified_histogram_estimator
+from histogram_estimator import generate_data_from_hist, histogram_estimator
 
 
 #%%
@@ -20,13 +20,13 @@ def main(args_dict):
     # TODO : FIX data type problem with random.rand vs random.normal (chiant)
 
     # Perform histogram estimation
-    fbm_estimator, rescaling_factors = modified_histogram_estimator(X, adaptative=adaptative)
+    hist_estimator, rescaling_factors = histogram_estimator(X, adaptative=adaptative)
 
     # Generate synthetic data
-    synthetic_data = generate_data_from_fbm(fbm_estimator, m, rescaling_factors, shuffle= True)
+    synthetic_data = generate_data_from_hist(hist_estimator, m, rescaling_factors, shuffle= True)
 
 
-    bin_number = int( fbm_estimator.shape[0])
+    bin_number = int( hist_estimator.shape[0])
     
     
     # Plot histograms
@@ -42,15 +42,15 @@ def main(args_dict):
 
     plt.show()
 
-    return X, synthetic_data, fbm_estimator, rescaling_factors
+    return X, synthetic_data, hist_estimator, rescaling_factors
 
 # Example usage of the main function
 args_dict = {'adaptative': True, 'm': 5000, 'd': 1, 'n': 1000}
-X, synthetic_data, fbm_estimator, rescaling_factors = main(args_dict)
+X, synthetic_data, hist_estimator, rescaling_factors = main(args_dict)
 
 
 
-synthetic_data_2 = generate_data_from_fbm(fbm_estimator, 10000, rescaling_factors, shuffle= True)
+synthetic_data_2 = generate_data_from_hist(hist_estimator, 10000, rescaling_factors, shuffle= True)
 
 # Use a random normal distribution for comparison
 standard_normal_samples = np.random.normal(size=synthetic_data_2.shape[0])

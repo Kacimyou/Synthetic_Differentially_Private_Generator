@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-def modified_histogram_estimator(X, h=0.1, adaptative = True):
+def histogram_estimator(X, h=0.1, adaptative = True):
     """
     Computes the normalized histogram estimator for multidimensional data with a specified number of bins per axis.
 
@@ -16,6 +16,7 @@ def modified_histogram_estimator(X, h=0.1, adaptative = True):
     - fbm: numpy array, the normalized histogram estimator values.
 
     """
+    
     
     # Calculate the dimensions of the data
     n, d = X.shape
@@ -48,8 +49,8 @@ def modified_histogram_estimator(X, h=0.1, adaptative = True):
     
 
     # Initialize the histogram estimator
-    fbm_shape = (m_per_axis,) * d
-    fbm = np.zeros(fbm_shape)
+    hist_shape = (m_per_axis,) * d
+    hist = np.zeros(hist_shape)
 
     # Iterate through each row as a separate data point
     for i in range(n):
@@ -57,25 +58,25 @@ def modified_histogram_estimator(X, h=0.1, adaptative = True):
         bin_indices = tuple(int(np.floor(X_scaled[i, j] / h)) for j in range(d))
         
         # Update the histogram estimator
-        fbm[bin_indices] += 1
+        hist[bin_indices] += 1
 
 
     # Normalize the histogram estimator
-    fbm /= n
+    hist /= n
     #TODO CONTINUE the implementation of privacy options
 
     # Check if the sum of elements is equal to 1
-    assert np.isclose(np.sum(fbm), 1.0), "Error: Sum of histogram elements is not equal to 1."
+    assert np.isclose(np.sum(hist), 1.0), "Error: Sum of histogram elements is not equal to 1."
     
     
     rescaling_factors = np.array([np.min(X, axis=0), np.max(X, axis=0)])
     
 
-    return fbm, rescaling_factors
+    return hist, rescaling_factors
 
 
 
-def generate_data_from_fbm(fbm_estimator, m, rescaling_factor = [1,0], shuffle = True):
+def generate_data_from_hist(hist_estimator, m, rescaling_factor = [1,0], shuffle = True):
     """
     Generates synthetic data points according to the empirical distribution represented by fbm_estimator.
 
@@ -87,19 +88,19 @@ def generate_data_from_fbm(fbm_estimator, m, rescaling_factor = [1,0], shuffle =
     - synthetic_data: numpy array, the generated synthetic data points.
     """
 
-    # Flatten the fbm_estimator to get a 1D array
-    flattened_fbm = fbm_estimator.flatten()
+    # Flatten the hist_estimator to get a 1D array
+    flattened_hist = hist_estimator.flatten()
 
     # Generate m indices according to the empirical distribution
-    indices = np.random.choice(len(flattened_fbm), size=m, p=flattened_fbm)
+    indices = np.random.choice(len(flattened_hist), size=m, p=flattened_hist)
 
     # Convert the flat indices to multi-dimensional indices
-    multi_dim_indices = np.unravel_index(indices, fbm_estimator.shape)
+    multi_dim_indices = np.unravel_index(indices, hist_estimator.shape)
     
 
 
-    # Get the binwidth from the fbm_estimator
-    binwidth = 1 / fbm_estimator.shape[0]  # Assuming the binwidth is the same in each dimension
+    # Get the binwidth from the hist_estimator
+    binwidth = 1 / hist_estimator.shape[0]  # Assuming the binwidth is the same in each dimension
     
     # Create synthetic data points based on the multi-dimensional indices
     if not(shuffle):
@@ -113,7 +114,7 @@ def generate_data_from_fbm(fbm_estimator, m, rescaling_factor = [1,0], shuffle =
         # Use the list of random numbers within the list comprehension
         synthetic_data = np.column_stack(
             [[rescaling_factor[0] + ((idx + np.random.uniform(0, 1)) * binwidth * (rescaling_factor[1] - rescaling_factor[0])) for idx in row] for row in multi_dim_indices]
-            
+
         )
 
     return synthetic_data
