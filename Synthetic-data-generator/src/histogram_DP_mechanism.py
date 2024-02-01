@@ -40,6 +40,7 @@ def perturbed_histogram(hist_estimator, alpha, n):
     Returns:
     - dp_hist: numpy array, differentially private histogram estimator.
     """
+    assert( 1 > alpha > 0), "Error: alpha should be between 0 and 1"
     #sensitivity = 1 / n  # Sensitivity of the histogram estimator
 
     # Generate Laplace noise for each component

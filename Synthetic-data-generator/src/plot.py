@@ -7,9 +7,8 @@ from histogram_DP_mechanism import smooth_histogram, perturbed_histogram
 from matplotlib.animation import FuncAnimation
 from IPython.display import HTML
 from ipywidgets import interact
-
-
 #%%
+
 
 def get_histograms(args_dict):
     # Extract parameters from args_dict
@@ -21,8 +20,14 @@ def get_histograms(args_dict):
     alpha = args_dict.get('alpha', 0.2)
 
   
-    X = np.random.normal(loc=0, scale=1, size=(n, d))
+    #X = np.random.normal(loc=0, scale=1, size=(n, d))
     #X = np.random.rand(10000, 2)
+    # Set mean and covariance matrix
+    mean = [0, 1]
+    covariance_matrix = [[0.1, 0.4], [0.4, 1]]
+
+    # Generate random sample
+    X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
     # TODO : FIX data type problem with random.rand vs random.normal (chiant)
 
     # Perform histogram estimation
@@ -42,7 +47,7 @@ def get_histograms(args_dict):
     
     return X, synthetic_data, smoothed_synthetic_data, perturbed_synthetic_data, hist_estimator, rescaling_factors
 
-args_dict = {'adaptative': True, 'm': 5000, 'd': 1, 'n': 1000, 'delta': 0.3, 'alpha': 0.99}
+
 
 def histogram_comparaison(args_dict, privacy):
     
@@ -78,22 +83,24 @@ def histogram_comparaison(args_dict, privacy):
 
 # Example usage of the main function
 
-histogram_comparaison(args_dict, privacy = "perturbed")
+args_dict = {'adaptative': True, 'm': 5000, 'd': 2, 'n': 15000, 'delta': 0.1, 'alpha': 0.99}
+
+histogram_comparaison(args_dict, privacy = None)
 
 
 #%%
 ### CHECK that non DP synthetic data retrieve initial data distribution ##### 
 
-X, synthetic_data, smoothed_synthetic_data, perturbed_synthetic_data, hist_estimator, rescaling_factors = get_histograms({'adaptative': True, 'm': 5000, 'd': 1, 'n': 5000, 'delta': 0.1})
-
+X, synthetic_data, smoothed_synthetic_data, perturbed_synthetic_data, hist_estimator, rescaling_factors = get_histograms({'adaptative': True, 'm': 1000, 'd': 1, 'n': 1000, 'delta': 0.1})
 
 # Sort the data
 synthetic_data_sorted = np.sort(synthetic_data[:, 0])
-standard_normal_samples_sorted = np.sort(X)
+standard_normal_samples_sorted = np.sort(np.random.normal(size = len(synthetic_data_sorted)))
+X_sorted = np.sort(X[:, 0])
 
 # Create QQ plot
 plt.figure(figsize=(8, 8))
-plt.scatter(synthetic_data_sorted, standard_normal_samples_sorted,  color='blue')
+plt.scatter(synthetic_data_sorted, X_sorted,  color='blue')
 plt.plot([np.min(X), np.max(X)],
          [np.min(X), np.max(X)],
          color='red', linestyle='--')
@@ -151,19 +158,32 @@ def smoothing_animation(args_dict, privacy):
         ax.set_xlabel('Dimension 1')
         ax.set_ylabel('Density')
 
-    # Create an animation*
-    #TODO FIX this so that frames = len(param_values) in case delta an alpha does not have same length
-    animation = FuncAnimation(fig, update, frames=len(delta_values), interval=50, repeat=False)
-
+    # Create an animation
+    if privacy == "smooth":
+        animation = FuncAnimation(fig, update, frames=len(delta_values), interval=50, repeat=False)
+    if privacy == "perturbed":
+        animation = FuncAnimation(fig, update, frames=len(alpha_values), interval=50, repeat=False)
     # Display the animation
     return HTML(animation.to_jshtml())
 
 # Example usage
-args_dict = {'adaptative': True, 'm': 5000, 'd': 1, 'n': 10000, 'delta_values': np.linspace(0,1,100), 'alpha_values': np.linspace(0.01,0.7,300)}
-smoothing_animation(args_dict, privacy = "perturbed")
+args_dict = {'adaptative': True, 'm': 50000, 'd': 1, 'n': 100000, 'delta_values': np.linspace(0,1,100), 'alpha_values': np.linspace(0.01,0.2,100)}
+smoothing_animation(args_dict, privacy = "smooth")
    
    
-#%%
+# %%
+X, synthetic_data, smoothed_synthetic_data, perturbed_synthetic_data, hist_estimator, rescaling_factors = get_histograms({'adaptative': True, 'm': 2000, 'd': 1, 'n': 11000, 'delta': 0.2, 'alpha': 0.35})
 
-X, synthetic_data, smoothed_synthetic_data, perturbed_synthetic_data, hist_estimator, rescaling_factors = get_histograms(
-args_dict = {'adaptative': True, 'm': 5000, 'd': 1, 'n': 92000, 'delta': 0.3, 'alpha': 0.99})
+
+# Scatter plots with labels
+plt.scatter(X[:, 0], X[:, 1], label='Original Data')
+plt.scatter(smoothed_synthetic_data[:, 0], smoothed_synthetic_data[:, 1], label='Smoothed Synthetic Data')
+plt.scatter(perturbed_synthetic_data[:, 0], perturbed_synthetic_data[:, 1], label='Perturbed Synthetic Data')
+
+# Add legend
+plt.legend()
+
+# Show the plot
+plt.show()
+print(np.shape(synthetic_data),np.shape(X))
+# %%
