@@ -98,11 +98,12 @@ synthetic_data_sorted = np.sort(synthetic_data[:, 0])
 standard_normal_samples_sorted = np.sort(np.random.normal(size = len(synthetic_data_sorted)))
 X_sorted = np.sort(X[:, 0])
 
+
 # Create QQ plot
 plt.figure(figsize=(8, 8))
 plt.scatter(synthetic_data_sorted, X_sorted,  color='blue')
-plt.plot([np.min(X), np.max(X)],
-         [np.min(X), np.max(X)],
+plt.plot([np.min(X[:, 0]), np.max(X[:, 0])],
+         [np.min(X[:, 0]), np.max(X[:, 0])],
          color='red', linestyle='--')
 plt.title('QQ Plot of Synthetic Data against Standard Normal Distribution')
 plt.xlabel('Quantiles of Synthetic Data')
@@ -168,7 +169,7 @@ def smoothing_animation(args_dict, privacy):
 
 # Example usage
 args_dict = {'adaptative': True, 'm': 50000, 'd': 1, 'n': 100000, 'delta_values': np.linspace(0,1,100), 'alpha_values': np.linspace(0.01,0.2,100)}
-smoothing_animation(args_dict, privacy = "smooth")
+smoothing_animation(args_dict, privacy = "perturbed")
    
    
 # %%
@@ -180,7 +181,7 @@ plt.scatter(X[:, 0], X[:, 1], label='Original Data')
 plt.scatter(smoothed_synthetic_data[:, 0], smoothed_synthetic_data[:, 1], label='Smoothed Synthetic Data')
 plt.scatter(perturbed_synthetic_data[:, 0], perturbed_synthetic_data[:, 1], label='Perturbed Synthetic Data')
 
-# Add legend
+# Add legendg
 plt.legend()
 
 # Show the plot

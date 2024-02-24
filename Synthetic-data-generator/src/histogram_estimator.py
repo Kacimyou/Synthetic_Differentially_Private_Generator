@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import scipy.stats as stats
 
 
+
 def histogram_estimator(X, h=0.1, adaptative = True):
     """
     Computes the normalized histogram estimator for multidimensional data with a specified number of bins per axis.
