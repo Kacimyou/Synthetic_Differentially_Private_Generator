@@ -1,5 +1,7 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
+
 #%%
 def get_i_k(j):
     """
@@ -21,7 +23,6 @@ def get_i_k(j):
         k = j - 2**i
         return (i+1, 2*k+1)
 
-# %%
 def phi_bar_i_k(i, k, t):
     """
     Compute the j-th Schauder basis function at time points t.
@@ -81,7 +82,7 @@ def psi_bar_i_k(i, k, t):
     psi_values = np.zeros(len(t))
     psi_values[t - k / 2**i>= 0] = -2**(i-1)
     psi_values[t - k / 2**i < 0] = 2**(i-1)
-    psi_values[phi_values == 0 ] = np.nan
+    psi_values[phi_values == 0 ] = 0
     
     return psi_values
 
@@ -102,57 +103,28 @@ def psi_bar_j(j, t):
     # Call psi_bar_i_k function to compute the Schauder basis function
     return psi_bar_i_k(i, k, t)
 
+#%%
+
+def random_walk_laplace(n):
+    
+    L = int(np.log2(n))
+    
+    laplace_noise = np.array([ np.random.laplace(loc = 0, scale = L + 2) for _ in range(n)])
+    
+    return laplace_noise
+    
+
+def super_regular_random_walk(laplace_noise, n, i ):
+    
+    psi_bar = np.array([psi_bar_j(j, np.array([i]))/n for j in range(1,n+1)])
+    psi_bar = psi_bar.flatten()
+    
+    print(psi_bar, laplace_noise)
+    
+    return np.dot(laplace_noise, psi_bar)
+
 
 #%%
-# Plot the Schauder basis functions
-i_max = 5
-
-t = np.linspace(0, 1, 1000)
-
-plt.figure(figsize=(10, 6))
-for i in range(0,i_max):
-    for k in range(1, 2**i+1,2):
-        basis_function_j = phi_bar_i_k(i,k, t)
-        plt.plot(t, basis_function_j, label=f'φ_{i}_{k}(t)')
-
-plt.title('Schauder Basis Functions')
-plt.xlabel('t')
-plt.ylabel('φ_j(t)')
-plt.grid(True)
-plt.legend()
-plt.show()
-#%%
-# Plot the Schauder basis functions
-num_functions = 8
-t = np.linspace(0, 1, 1000)
-
-plt.figure(figsize=(10, 6))
-for j in range(1, num_functions + 1):
-    basis_function_j = phi_bar(j, t)
-    plt.plot(t, basis_function_j, label=f'φ_{j}(t)')
-
-plt.title('Schauder Basis Functions')
-plt.xlabel('t')
-plt.ylabel('φ_j(t)')
-plt.grid(True)
-plt.legend()
-plt.show()
-
-#%%
-# Plot the Haar basis functions
-i_max = 4
-
-t = np.linspace(0, 1, 1000)
-
-plt.figure(figsize=(10, 6))
-for i in range(0,i_max):
-    for k in range(1, 2**i+1,2):
-        basis_function_j = psi_bar_i_k(i,k, t)
-        plt.plot(t, basis_function_j, label=f'φ_{i}_{k}(t)')
-
-plt.title('Schauder Basis Functions')
-plt.xlabel('t')
-plt.ylabel('φ_j(t)')
-plt.grid(True)
-plt.legend()
-plt.show()
+n = 10
+laplace_noise = [np.random.laplace(loc = 0, scale = 1) for _ in range(n)]
+super_regular_random_walk(laplace_noise, n, 1/7)
