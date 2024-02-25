@@ -35,9 +35,7 @@ def private_synthetic_data(true_data, test_functions, reduced_space, sigma, k):
 
 # Example usage:
 true_data = np.random.normal(loc=5, scale=1, size=100)  # Example true data
-test_functions = [lambda x: x, lambda x : x**2-
-                  
-                  +]  # Example test functions
+test_functions = [lambda x: x, lambda x : x**2]  # Example test functions
 reduced_space = np.linspace(3, 6, 10)  # Example reduced space
 sigma = 0.001  # Example noise parameter
 k = 100  # Example number of synthetic data points
