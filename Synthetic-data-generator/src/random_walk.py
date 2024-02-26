@@ -111,7 +111,7 @@ def random_walk_laplace(n):
 
     L = int(np.log2(n))
 
-    laplace_noise = np.array([np.random.laplace(loc=0, scale=L + 2) for _ in range(n)])
+    laplace_noise = np.random.laplace(loc=0, scale=L + 2, size=n)
 
     return laplace_noise
 
@@ -143,7 +143,44 @@ def super_regular_noise(n, epsilon):
 
 
 # %%
-n = 47
+n = 300
 super_regular_noise(n, epsilon=0.9)
 
 # %%
+
+
+def precompute_basis_functions(n):
+    basis_functions = []
+    for j in range(1, n + 1):
+        i, k = get_i_k(j)
+        basis_functions.append((i, k))
+    return basis_functions
+
+
+def precompute_psi_bar(n, basis_functions, t_values):
+    psi_values = np.zeros((n, len(t_values)))
+    for j in range(1, n + 1):
+        i, k = basis_functions[j - 1]
+        psi_values[j - 1] = psi_bar_i_k(i, k, t_values)
+    return psi_values / n
+
+
+def random_walk_laplace(n):
+    L = int(np.log2(n))
+    return np.random.laplace(loc=0, scale=L + 2, size=n)
+
+
+def super_regular_noise_bis(n, epsilon):
+    basis_functions = precompute_basis_functions(n)
+    t_values = np.arange(1, n + 1) / n
+    psi_bar_values = precompute_psi_bar(n, basis_functions, t_values)
+
+    privacy_factor = 2 / (epsilon * n)
+    laplace_noise = random_walk_laplace(n)
+    super_regular_noise = np.dot(laplace_noise, psi_bar_values.T)
+    private_super_regular_noise = privacy_factor * super_regular_noise
+
+    return private_super_regular_noise
+
+
+super_regular_noise_bis(1000, 0.9)
