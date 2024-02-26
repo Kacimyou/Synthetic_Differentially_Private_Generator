@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# %%
 def get_i_k(j):
     """
     Calculate the values of i and k for the given j.
@@ -107,73 +106,59 @@ def psi_bar_j(j, t):
     return psi_bar_i_k(i, k, t)
 
 
-def random_walk_laplace(n):
+def precompute_basis_index(n):
+    """
+    Precompute basis functions for given length n.
 
-    L = int(np.log2(n))
+    Parameters:
+        n (int): Length of the basis function array.
 
-    laplace_noise = np.random.laplace(loc=0, scale=L + 2, size=n)
+    Returns:
+        list: List of tuples containing the precomputed i and k index values.
+    """
 
-    return laplace_noise
-
-
-def super_regular_random_walk(laplace_noise, n, i):
-
-    psi_bar = np.array([psi_bar_j(j, np.array([i])) / n for j in range(1, n + 1)])
-
-    psi_bar = psi_bar.flatten()
-
-    return np.dot(laplace_noise, psi_bar)
-
-
-def super_regular_noise(n, epsilon):
-
-    privacy_factor = 2 / (epsilon * n)
-
-    laplace_noise = random_walk_laplace(n)
-
-    super_regular_noise = np.zeros(n)
-
-    for i in range(1, n + 1):
-
-        super_regular_noise[i - 1] = super_regular_random_walk(laplace_noise, n, i / n)
-
-    private_super_regular_noise = privacy_factor * super_regular_noise
-
-    return private_super_regular_noise
-
-
-# %%
-n = 300
-super_regular_noise(n, epsilon=0.9)
-
-# %%
-
-
-def precompute_basis_functions(n):
-    basis_functions = []
+    basis_index = []
     for j in range(1, n + 1):
         i, k = get_i_k(j)
-        basis_functions.append((i, k))
-    return basis_functions
+        basis_index.append((i, k))
+    return basis_index
 
 
-def precompute_psi_bar(n, basis_functions, t_values):
+def precompute_psi_bar(n, basis_index, t_values):
+    """
+    Precompute psi_bar values for given basis functions index and time values.
+
+    Parameters:
+        n (int): Length of the psi_bar array.
+        basis_functions (list): List of tuples containing i and k values.
+        t_values (array-like): Array of time values.
+
+    Returns:
+        array-like: Array of precomputed psi_bar values.
+    """
+
     psi_values = np.zeros((n, len(t_values)))
     for j in range(1, n + 1):
-        i, k = basis_functions[j - 1]
+        i, k = basis_index[j - 1]
         psi_values[j - 1] = psi_bar_i_k(i, k, t_values)
     return psi_values / n
 
 
-def random_walk_laplace(n):
-    L = int(np.log2(n))
-    return np.random.laplace(loc=0, scale=L + 2, size=n)
-
-
 def super_regular_noise_bis(n, epsilon):
-    basis_functions = precompute_basis_functions(n)
+    """
+    Generate super-regular noise with differential privacy
+    using precomputed functions
+
+    Parameters:
+        n (int): Length of the noise vector.
+        epsilon (float): Privacy parameter.
+
+    Returns:
+        array-like: Array of differentially private super-regular noise.
+    """
+    basis_index = precompute_basis_index(n)
     t_values = np.arange(1, n + 1) / n
-    psi_bar_values = precompute_psi_bar(n, basis_functions, t_values)
+    psi_bar_values = precompute_psi_bar(n, basis_index, t_values)
 
     privacy_factor = 2 / (epsilon * n)
     laplace_noise = random_walk_laplace(n)
@@ -183,4 +168,28 @@ def super_regular_noise_bis(n, epsilon):
     return private_super_regular_noise
 
 
-super_regular_noise_bis(1000, 0.9)
+def random_walk_laplace(n):
+    """
+    Generate Laplace noise for a random walk.
+
+    Parameters:
+        n (int): Length of the random walk.
+
+    Returns:
+        array-like: Array of Laplace noise with scale parameter L + 2.
+    """
+
+    L = int(np.log2(n))
+
+    laplace_noise = np.random.laplace(loc=0, scale=L + 2, size=n)
+
+    return laplace_noise
+
+
+# %%
+
+
+# %%
+super_regular_noise_bis(1000, 0.5)
+
+# %%
