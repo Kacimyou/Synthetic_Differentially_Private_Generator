@@ -1,4 +1,5 @@
 
+#%%
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -119,12 +120,33 @@ def super_regular_random_walk(laplace_noise, n, i ):
     psi_bar = np.array([psi_bar_j(j, np.array([i]))/n for j in range(1,n+1)])
     psi_bar = psi_bar.flatten()
     
-    print(psi_bar, laplace_noise)
-    
     return np.dot(laplace_noise, psi_bar)
+
+def super_regular_noise(n, epsilon):
+    
+    privacy_factor = 2/(epsilon*n)
+    
+    laplace_noise = random_walk_laplace(n)
+    
+    super_regular_noise = np.zeros(n)
+    
+    for i in range(1, n+1):
+        
+        super_regular_noise[i-1] = super_regular_random_walk(laplace_noise, n, i/n)
+        
+    private_super_regular_noise = privacy_factor * super_regular_noise
+        
+    return private_super_regular_noise
+
+
+
+        
+        
+        
 
 
 #%%
-n = 10
-laplace_noise = [np.random.laplace(loc = 0, scale = 1) for _ in range(n)]
-super_regular_random_walk(laplace_noise, n, 1/7)
+n = 47
+super_regular_noise(n, epsilon= 0.9)
+
+# %%
