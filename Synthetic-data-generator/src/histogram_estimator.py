@@ -65,7 +65,7 @@ def histogram_estimator(X, h=0.1, adaptative=True):
         bin_indices = tuple(
             (
                 int(np.floor(X_scaled[i, j] / h)) - 1
-                if np.floor(X_scaled[i, j] / h) == 1 / h
+                if np.floor(X_scaled[i, j]) == 1
                 else int(np.floor(X_scaled[i, j] / h))
             )
             for j in range(d)

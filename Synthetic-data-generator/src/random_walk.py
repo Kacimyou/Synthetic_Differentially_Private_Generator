@@ -62,6 +62,7 @@ def phi_bar_i_k(i, k, t):
     phi_values = 1 - 2**i * np.abs(t - k / 2**i)
 
     # Set negative values to zero
+
     phi_values[phi_values < 0] = 0
 
     return phi_values
@@ -98,12 +99,19 @@ def psi_bar_i_k(i, k, t):
         array-like: Values of the derivative of the Schauder basis function evaluated at time points t.
     """
     phi_values = phi_bar_i_k(i, k, t)
+
     if (i, k) == (0, 1):
         return np.ones(len(t))
     psi_values = np.zeros(len(t))
-    psi_values[t - k / 2**i >= 0] = -(2 ** (i - 1))
-    psi_values[t - k / 2**i < 0] = 2 ** (i - 1)
-    psi_values[phi_values == 0] = 0
+
+    psi_values[t - k / 2**i > 0] = -(2 ** (i - 1))
+    psi_values[(t - k / 2**i <= 0)] = 2 ** (i - 1)
+    psi_values[(phi_values == 0) & (1 - 2**i * np.abs(t - k / 2**i) == 0)] = -(
+        2 ** (i - 1)
+    )
+
+    psi_values[(phi_values == 0) & (1 - 2**i * np.abs(t - k / 2**i) != 0)] = 0
+    psi_values[(t - k / 2**i <= 0) & (1 - 2**i * np.abs(t - k / 2**i) == 0)] = 0
 
     return psi_values
 
@@ -150,7 +158,7 @@ def precompute_psi_bar(n, basis_index, t_values):
 
     Parameters:
         n (int): Length of the psi_bar array.
-        basis_functions (list): List of tuples containing i and k values.
+        basis_index (list): List of tuples containing indexs i and k values.
         t_values (array-like): Array of time values.
 
     Returns:
@@ -182,9 +190,19 @@ def super_regular_noise(n, epsilon):
 
     privacy_factor = 2 / (epsilon * n)
     laplace_noise = random_walk_laplace(n)
-    super_regular_noise = np.dot(laplace_noise, psi_bar_values.T)
+    super_regular_noise = np.dot(laplace_noise, psi_bar_values)
     private_super_regular_noise = privacy_factor * super_regular_noise
 
+    print(
+        t_values,
+        "####################PSI",
+        len(psi_bar_values),
+        psi_bar_values,
+        "\n",
+        "####################Laplace",
+        len(laplace_noise),
+        laplace_noise,
+    )
     return private_super_regular_noise
 
 
@@ -263,36 +281,47 @@ def minimize_signed_measure(omega, nu):
         raise ValueError("Optimization failed: " + result.message)
 
 
-def private_measure_via_random_walk(X, epsilon):
+def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
 
     # Calculate the dimensions of the data
     n, d = X.shape
 
     assert d == 1, "Error: d>1 is not implemented for this method at the moment"
 
-    histogram, rescaling_factors = histogram_estimator(X, h=1 / n, adaptative=False)
+    histogram, rescaling_factors = histogram_estimator(X, adaptative=True)
 
-    privacy_noise = super_regular_noise(n, epsilon)
+    if adaptative == True:
+        h = n ** (-1 / (2 + d))
+        h_inverse = 1 / h
+        bin_per_axis = int(np.ceil(h_inverse))
+    else:
+        bin_per_axis = n
+
+    privacy_noise = super_regular_noise(bin_per_axis, epsilon) / bin_per_axis
 
     noisy_histogram = histogram + privacy_noise
 
-    omega = np.arange(0, n) / n
+    omega = np.arange(0, bin_per_axis) / bin_per_axis
 
     prob_measure = minimize_signed_measure(omega, noisy_histogram)
 
-    print("histogram", histogram)
-    print("Noisy", noisy_histogram)
+    if display:
+        print("histogram", histogram)
+
+        print("Noisy hist", noisy_histogram)
+        plt.scatter(np.arange(0, bin_per_axis) / bin_per_axis, histogram)
+        # plt.scatter(np.arange(0, bin_per_axis) / bin_per_axis, noisy_histogram)
+        plt.scatter(np.arange(0, bin_per_axis) / bin_per_axis, prob_measure)
 
     return prob_measure, rescaling_factors
 
 
 # %%
-
-np.mean(np.abs(super_regular_noise(5000, 0.95)))
+super_regular_noise(4, 1)
 
 # %%
 
-n = 1000
+n = 10000
 d = 1
 omega = np.arange(0, n) / n
 nu = [
@@ -402,6 +431,8 @@ nu = [
 
 # %%
 X = np.random.normal(loc=0, scale=1, size=(n, d))
-private_measure_via_random_walk(X, epsilon=0.9)
-
+hist, rescale = private_measure_via_random_walk(X, epsilon=0.70, display=True)
+print(hist)
+# %%
+plt.hist(hist)
 # %%
