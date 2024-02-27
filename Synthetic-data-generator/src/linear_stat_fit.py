@@ -32,7 +32,6 @@ def reweight_density(true_data, test_functions, reduced_space, sigma, noise):
     constraints = [{"type": "eq", "fun": constraint}]
 
     result = minimize(objective, initial_guess, bounds=bounds, constraints=constraints)
-    print(result.x, np.sum(result.x))
     return result.x
 
 

@@ -1,11 +1,9 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
 
-
-def histogram_estimator(X, h=0.1, adaptative = True):
+def histogram_estimator(X, h=0.1, adaptative=True):
     """
     Computes the normalized histogram estimator for multidimensional data with a specified number of bins per axis.
 
@@ -18,11 +16,10 @@ def histogram_estimator(X, h=0.1, adaptative = True):
     - hist: numpy array, the normalized histogram estimator values.
 
     """
-    
-    
+
     # Calculate the dimensions of the data
     n, d = X.shape
-    
+
     # Calculate min and max along each axis
     min_values = np.min(X, axis=0)
     max_values = np.max(X, axis=0)
@@ -36,27 +33,26 @@ def histogram_estimator(X, h=0.1, adaptative = True):
         
         X_scaled = X
     """
-    
-    
-    X_scaled = (X - rescaling_factors[0]) / (rescaling_factors[1] - rescaling_factors[0])
-    
+
+    X_scaled = (X - rescaling_factors[0]) / (
+        rescaling_factors[1] - rescaling_factors[0]
+    )
+
     if adaptative == True:
         # Calculate the binwidth based on the given parameters
-        h = n**(-1 / (2 + d))
-    
-    assert h<1 and h>0 , "Error: h must be between 0 and 1"
-    
-    
+        h = n ** (-1 / (2 + d))
+
+    assert h < 1 and h > 0, "Error: h must be between 0 and 1"
+
     # Check if 1/h is an integer, and convert if necessary
     m_inverse = 1 / h
     if not m_inverse.is_integer():
         m_per_axis = int(np.ceil(m_inverse))
-        print(f"Warning: 1/h is not an integer. Converting to the closest integer: {m_per_axis}")
+        print(
+            f"Warning: 1/h is not an integer. Converting to the closest integer: {m_per_axis}"
+        )
     else:
         m_per_axis = int(m_inverse)
-        
-
-    
 
     # Initialize the histogram estimator
     hist_shape = (m_per_axis,) * d
@@ -66,23 +62,23 @@ def histogram_estimator(X, h=0.1, adaptative = True):
     for i in range(n):
         # Determine the bin index for the current data point in each dimension
         bin_indices = tuple(int(np.floor(X_scaled[i, j] / h)) for j in range(d))
-        
+
         # Update the histogram estimator
         hist[bin_indices] += 1
 
-
     # Normalize the histogram estimator
     hist /= n
-    #TODO CONTINUE the implementation of privacy options
+    # TODO CONTINUE the implementation of privacy options
 
     # Check if the sum of elements is equal to 1
-    assert np.isclose(np.sum(hist), 1.0), "Error: Sum of histogram elements is not equal to 1."
-    
+    assert np.isclose(
+        np.sum(hist), 1.0
+    ), "Error: Sum of histogram elements is not equal to 1."
+
     return hist, rescaling_factors
 
 
-
-def generate_data_from_hist(hist_estimator, m, rescaling_factor = [1,0], shuffle = True):
+def generate_data_from_hist(hist_estimator, m, rescaling_factor=[0, 1], shuffle=True):
     """
     Generates synthetic data points according to the empirical distribution represented by fbm_estimator.
 
@@ -102,28 +98,38 @@ def generate_data_from_hist(hist_estimator, m, rescaling_factor = [1,0], shuffle
 
     # Convert the flat indices to multi-dimensional indices
     multi_dim_indices = np.unravel_index(indices, hist_estimator.shape)
-    
+
     multi_dim_indices = np.array(multi_dim_indices).T
 
     # Get the binwidth from the hist_estimator
-    binwidth = 1 / hist_estimator.shape[0]  # Assuming the binwidth is the same in each dimension
-    
+    binwidth = (
+        1 / hist_estimator.shape[0]
+    )  # Assuming the binwidth is the same in each dimension
+
     # Create synthetic data points based on the multi-dimensional indices
-    
+
     # Create synthetic data points based on the multi-dimensional indices
-    if not(shuffle):
-        #TODO : Make a function for rescaling_factor[0] + ((idx+0.5) * binwidth * (rescaling_factor[1] - rescaling_factor[0]))
+    if not (shuffle):
+        # TODO : Make a function for rescaling_factor[0] + ((idx+0.5) * binwidth * (rescaling_factor[1] - rescaling_factor[0]))
         synthetic_data = np.array(
-        [rescaling_factor[0] + ((idx+0.5) * binwidth * (rescaling_factor[1] - rescaling_factor[0])) for idx in multi_dim_indices]
-    )
-    if shuffle:
-        
-        synthetic_data = np.array(
-            [rescaling_factor[0] + ((idx + np.random.uniform(0, 1, size = len(hist_estimator.shape))) * binwidth * (rescaling_factor[1] - rescaling_factor[0])) for idx in multi_dim_indices]
+            [
+                rescaling_factor[0]
+                + ((idx + 0.5) * binwidth * (rescaling_factor[1] - rescaling_factor[0]))
+                for idx in multi_dim_indices
+            ]
         )
-    
+    if shuffle:
+
+        synthetic_data = np.array(
+            [
+                rescaling_factor[0]
+                + (
+                    (idx + np.random.uniform(0, 1, size=len(hist_estimator.shape)))
+                    * binwidth
+                    * (rescaling_factor[1] - rescaling_factor[0])
+                )
+                for idx in multi_dim_indices
+            ]
+        )
+
     return synthetic_data
-
-
-
-
