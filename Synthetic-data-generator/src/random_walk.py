@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
+from histogram_estimator import histogram_estimator, generate_data_from_hist
 
 
 def get_i_k(j):
@@ -237,7 +238,7 @@ def minimize_signed_measure(omega, nu):
         return np.sum(x) - 1
 
     # Initial guess for νb
-    nu_prob_0 = np.ones(n - 1) / (n - 1)
+    nu_prob_0 = np.ones(n) / n
 
     # Constraints
     constraints = [
@@ -246,13 +247,12 @@ def minimize_signed_measure(omega, nu):
     ]
 
     # Bounds for νb(ωi)
-    bounds = [(0, 1)] * (n - 1)
+    bounds = [(0, 1)] * n
 
     # Solve the optimization problem
     result = minimize(
         objective_function,
         nu_prob_0,
-        method="SLSQP",
         bounds=bounds,
         constraints=constraints,
     )
@@ -263,29 +263,145 @@ def minimize_signed_measure(omega, nu):
         raise ValueError("Optimization failed: " + result.message)
 
 
-# %%
-super_regular_noise(10, 0.5)
+def private_measure_via_random_walk(X, epsilon):
+
+    # Calculate the dimensions of the data
+    n, d = X.shape
+
+    assert d == 1, "Error: d>1 is not implemented for this method at the moment"
+
+    histogram, rescaling_factors = histogram_estimator(X, h=1 / n, adaptative=False)
+
+    privacy_noise = super_regular_noise(n, epsilon)
+
+    noisy_histogram = histogram + privacy_noise
+
+    omega = np.arange(0, n) / n
+
+    prob_measure = minimize_signed_measure(omega, noisy_histogram)
+
+    print("histogram", histogram)
+    print("Noisy", noisy_histogram)
+
+    return prob_measure, rescaling_factors
 
 
 # %%
-n = 15
-omega = np.arange(1, n) / n
+
+np.mean(np.abs(super_regular_noise(5000, 0.95)))
+
+# %%
+
+n = 1000
+d = 1
+omega = np.arange(0, n) / n
 nu = [
-    -0.1,
-    0.2,
-    0.14,
-    0.042,
-    -0.014,
-    0.52,
-    0.24,
-    0.014,
-    -0.14,
-    0.2,
-    0.14,
-    0.042,
-    -0.014,
-    0.078,
-    0.054,
+    -0.03681204,
+    0.06048189,
+    -0.0361927,
+    -0.05452837,
+    -0.0381622,
+    0.00469401,
+    0.10321175,
+    -0.06149333,
+    0.047348,
+    0.10465018,
+    -0.03489208,
+    0.01388376,
+    0.10618425,
+    -0.05106611,
+    -0.00062602,
+    -0.0263301,
+    0.07857817,
+    -0.10026255,
+    -0.03543559,
+    -0.0347201,
+    0.13738909,
+    -0.1846867,
+    -0.02046825,
+    0.08659036,
+    0.01295036,
+    0.0722068,
+    0.12607191,
+    -0.20018651,
+    -0.08609094,
+    0.21247491,
+    0.12300099,
+    -0.01543522,
+    0.18092333,
+    -0.05010617,
+    0.12507875,
+    0.05338238,
+    0.07057642,
+    0.14803861,
+    -0.08378199,
+    0.19660702,
+    0.06867085,
+    0.28720526,
+    0.03612286,
+    -0.13231207,
+    0.03952573,
+    0.28438344,
+    0.24392974,
+    0.16877611,
+    0.12789762,
+    0.04206525,
+    -0.26262078,
+    -0.11287849,
+    0.08236662,
+    -0.15812994,
+    -0.4107314,
+    0.07624718,
+    0.19236165,
+    -0.18038165,
+    -0.01727428,
+    0.16153415,
+    0.04801131,
+    -0.0438784,
+    -0.10171691,
+    0.14776543,
+    -0.2156104,
+    0.02925715,
+    0.15257545,
+    0.03944996,
+    -0.07377091,
+    0.32002718,
+    0.04505783,
+    0.03824109,
+    0.04242793,
+    0.00627655,
+    0.23013874,
+    -0.00713244,
+    0.00230287,
+    -0.030503,
+    0.1138652,
+    -0.18145182,
+    -0.19894155,
+    -0.11676812,
+    -0.12269779,
+    -0.06220849,
+    -0.08589807,
+    0.0929764,
+    0.1150404,
+    0.10371585,
+    -0.10641246,
+    -0.02227546,
+    0.12265577,
+    0.17164574,
+    -0.23153962,
+    -0.10283746,
+    0.23473566,
+    -0.17086455,
+    -0.17134639,
+    -0.07726667,
+    -0.0596133,
+    -0.04123565,
 ]
 
-np.sum(minimize_signed_measure(omega, nu))
+# minimize_signed_measure(omega, nu)
+
+# %%
+X = np.random.normal(loc=0, scale=1, size=(n, d))
+private_measure_via_random_walk(X, epsilon=0.9)
+
+# %%

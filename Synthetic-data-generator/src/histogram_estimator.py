@@ -61,9 +61,18 @@ def histogram_estimator(X, h=0.1, adaptative=True):
     # Iterate through each row as a separate data point
     for i in range(n):
         # Determine the bin index for the current data point in each dimension
-        bin_indices = tuple(int(np.floor(X_scaled[i, j] / h)) for j in range(d))
+        # TODO Fix this
+        bin_indices = tuple(
+            (
+                int(np.floor(X_scaled[i, j] / h)) - 1
+                if np.floor(X_scaled[i, j] / h) == 1 / h
+                else int(np.floor(X_scaled[i, j] / h))
+            )
+            for j in range(d)
+        )
 
         # Update the histogram estimator
+
         hist[bin_indices] += 1
 
     # Normalize the histogram estimator
