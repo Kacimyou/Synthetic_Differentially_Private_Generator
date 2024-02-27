@@ -143,7 +143,7 @@ args_dict = {
     "alpha": 0.99,
 }
 
-histogram_comparaison(args_dict, privacy=perturbed_histogram)
+histogram_comparaison(args_dict, privacy="perturbed")
 
 
 # %%
