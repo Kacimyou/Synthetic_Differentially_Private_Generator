@@ -1,6 +1,7 @@
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize
 
 
 def get_i_k(j):
@@ -22,6 +23,24 @@ def get_i_k(j):
         i = int(np.log2(j))
         k = j - 2**i
         return (i + 1, 2 * k + 1)
+
+
+def random_walk_laplace(n):
+    """
+    Generate Laplace noise for a random walk.
+
+    Parameters:
+        n (int): Length of the random walk.
+
+    Returns:
+        array-like: Array of Laplace noise with scale parameter L + 2.
+    """
+
+    L = int(np.log2(n))
+
+    laplace_noise = np.random.laplace(loc=0, scale=L + 2, size=n)
+
+    return laplace_noise
 
 
 def phi_bar_i_k(i, k, t):
@@ -144,7 +163,7 @@ def precompute_psi_bar(n, basis_index, t_values):
     return psi_values / n
 
 
-def super_regular_noise_bis(n, epsilon):
+def super_regular_noise(n, epsilon):
     """
     Generate super-regular noise with differential privacy
     using precomputed functions
@@ -168,28 +187,105 @@ def super_regular_noise_bis(n, epsilon):
     return private_super_regular_noise
 
 
-def random_walk_laplace(n):
+def minimize_signed_measure(omega, nu):
     """
-    Generate Laplace noise for a random walk.
+    Minimize the given minimization problem to transform the DP-signed measure into
+    DP-probability measure, to generate synthetic data.
 
     Parameters:
-        n (int): Length of the random walk.
+        omega (array-like): Array of values representing the events ω.
+        nu (array-like): Array of values representing the signed measure of events.
+        nu_prob (array-like): Array of values representing the probability of events.
+            (That we are trying to estimate)
 
     Returns:
-        array-like: Array of Laplace noise with scale parameter L + 2.
+        float: DP-probability measure as close as possible so nu w.r.t to Wasserstein metric
     """
+    n = len(omega)
 
-    L = int(np.log2(n))
+    def objective_function(nu_b):
+        """
+        Objective function to minimize.
 
-    laplace_noise = np.random.laplace(loc=0, scale=L + 2, size=n)
+        Parameters:
+            nu_b (array-like): Array of values representing estimated prob of events
 
-    return laplace_noise
+        Returns:
+            float: The value of the objective function.
+        """
+        obj = 0
+        for k in range(n):
+            if k == n - 1:
+                obj += (1 - omega[k]) * np.abs(np.sum(nu_b[:k]) - np.sum(nu[:k]))
+            else:
+                obj += (omega[k + 1] - omega[k]) * np.abs(
+                    np.sum(nu_b[:k]) - np.sum(nu[:k])
+                )
+        return obj
+
+    # Constraint functions
+    def positivity(x):
+        """
+        Constraint: nu(ωi) >= 0
+        """
+        return x
+
+    def sum_to_one(x):
+        """
+        Constraint: Sum of nu(ωi) = 1
+        """
+        return np.sum(x) - 1
+
+    # Initial guess for νb
+    nu_prob_0 = np.ones(n - 1) / (n - 1)
+
+    # Constraints
+    constraints = [
+        {"type": "ineq", "fun": positivity},
+        {"type": "eq", "fun": sum_to_one},
+    ]
+
+    # Bounds for νb(ωi)
+    bounds = [(0, 1)] * (n - 1)
+
+    # Solve the optimization problem
+    result = minimize(
+        objective_function,
+        nu_prob_0,
+        method="SLSQP",
+        bounds=bounds,
+        constraints=constraints,
+    )
+
+    if result.success:
+        return result.x
+    else:
+        raise ValueError("Optimization failed: " + result.message)
 
 
 # %%
+super_regular_noise(10, 0.5)
 
 
 # %%
-super_regular_noise_bis(1000, 0.5)
+n = 15
+omega = np.arange(1, n) / n
+nu = [
+    -0.1,
+    0.2,
+    0.14,
+    0.042,
+    -0.014,
+    0.52,
+    0.24,
+    0.014,
+    -0.14,
+    0.2,
+    0.14,
+    0.042,
+    -0.014,
+    0.078,
+    0.054,
+]
 
-# %%
+np.sum(minimize_signed_measure(omega, nu))
