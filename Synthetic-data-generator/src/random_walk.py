@@ -172,28 +172,29 @@ def precompute_psi_bar(n, basis_index, t_values):
     return psi_values / n
 
 
-def super_regular_noise(n, epsilon):
+def super_regular_noise(m, n, epsilon):
     """
     Generate super-regular noise with differential privacy
     using precomputed functions
 
     Parameters:
-        n (int): Length of the noise vector.
+        m (int): Length of the noise vector.
+        n (int); size of data
         epsilon (float): Privacy parameter.
 
     Returns:
         array-like: Array of differentially private super-regular noise.
     """
-    basis_index = precompute_basis_index(n)
-    t_values = np.arange(1, n + 1) / n
-    psi_bar_values = precompute_psi_bar(n, basis_index, t_values)
+    basis_index = precompute_basis_index(m)
+    t_values = np.arange(1, m + 1) / m
+    psi_bar_values = precompute_psi_bar(m, basis_index, t_values)
 
     privacy_factor = 2 / (epsilon * n)
-    laplace_noise = random_walk_laplace(n)
+    laplace_noise = random_walk_laplace(m)
     super_regular_noise = np.dot(laplace_noise, psi_bar_values)
     private_super_regular_noise = privacy_factor * super_regular_noise
 
-    print(
+    """print(
         t_values,
         "####################PSI",
         len(psi_bar_values),
@@ -202,7 +203,8 @@ def super_regular_noise(n, epsilon):
         "####################Laplace",
         len(laplace_noise),
         laplace_noise,
-    )
+    )"""
+
     return private_super_regular_noise
 
 
@@ -288,7 +290,7 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
 
     assert d == 1, "Error: d>1 is not implemented for this method at the moment"
 
-    histogram, rescaling_factors = histogram_estimator(X, adaptative=True)
+    histogram, rescaling_factors = histogram_estimator(X, adaptative)
 
     if adaptative == True:
         h = n ** (-1 / (2 + d))
@@ -297,7 +299,7 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
     else:
         bin_per_axis = n
 
-    privacy_noise = super_regular_noise(bin_per_axis, epsilon) / bin_per_axis
+    privacy_noise = super_regular_noise(bin_per_axis, n, epsilon)
 
     noisy_histogram = histogram + privacy_noise
 
@@ -309,130 +311,30 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
         print("histogram", histogram)
 
         print("Noisy hist", noisy_histogram)
-        plt.scatter(np.arange(0, bin_per_axis) / bin_per_axis, histogram)
-        # plt.scatter(np.arange(0, bin_per_axis) / bin_per_axis, noisy_histogram)
-        plt.scatter(np.arange(0, bin_per_axis) / bin_per_axis, prob_measure)
+        bins_edges = np.arange(0, bin_per_axis) / bin_per_axis
+
+        bar_width = 1 / bin_per_axis
+
+        plt.scatter(bins_edges, histogram, label="True histogram")
+        plt.scatter(bins_edges, noisy_histogram, label="Noisy signed measure")
+        plt.scatter(bins_edges, prob_measure, label="Final histogram prob")
+        plt.legend()
+        plt.show()
 
     return prob_measure, rescaling_factors
 
 
 # %%
-super_regular_noise(4, 1)
+super_regular_noise(50, 1000, 0.2)
 
 # %%
 
 n = 10000
 d = 1
-omega = np.arange(0, n) / n
-nu = [
-    -0.03681204,
-    0.06048189,
-    -0.0361927,
-    -0.05452837,
-    -0.0381622,
-    0.00469401,
-    0.10321175,
-    -0.06149333,
-    0.047348,
-    0.10465018,
-    -0.03489208,
-    0.01388376,
-    0.10618425,
-    -0.05106611,
-    -0.00062602,
-    -0.0263301,
-    0.07857817,
-    -0.10026255,
-    -0.03543559,
-    -0.0347201,
-    0.13738909,
-    -0.1846867,
-    -0.02046825,
-    0.08659036,
-    0.01295036,
-    0.0722068,
-    0.12607191,
-    -0.20018651,
-    -0.08609094,
-    0.21247491,
-    0.12300099,
-    -0.01543522,
-    0.18092333,
-    -0.05010617,
-    0.12507875,
-    0.05338238,
-    0.07057642,
-    0.14803861,
-    -0.08378199,
-    0.19660702,
-    0.06867085,
-    0.28720526,
-    0.03612286,
-    -0.13231207,
-    0.03952573,
-    0.28438344,
-    0.24392974,
-    0.16877611,
-    0.12789762,
-    0.04206525,
-    -0.26262078,
-    -0.11287849,
-    0.08236662,
-    -0.15812994,
-    -0.4107314,
-    0.07624718,
-    0.19236165,
-    -0.18038165,
-    -0.01727428,
-    0.16153415,
-    0.04801131,
-    -0.0438784,
-    -0.10171691,
-    0.14776543,
-    -0.2156104,
-    0.02925715,
-    0.15257545,
-    0.03944996,
-    -0.07377091,
-    0.32002718,
-    0.04505783,
-    0.03824109,
-    0.04242793,
-    0.00627655,
-    0.23013874,
-    -0.00713244,
-    0.00230287,
-    -0.030503,
-    0.1138652,
-    -0.18145182,
-    -0.19894155,
-    -0.11676812,
-    -0.12269779,
-    -0.06220849,
-    -0.08589807,
-    0.0929764,
-    0.1150404,
-    0.10371585,
-    -0.10641246,
-    -0.02227546,
-    0.12265577,
-    0.17164574,
-    -0.23153962,
-    -0.10283746,
-    0.23473566,
-    -0.17086455,
-    -0.17134639,
-    -0.07726667,
-    -0.0596133,
-    -0.04123565,
-]
-
-# minimize_signed_measure(omega, nu)
 
 # %%
+
 X = np.random.normal(loc=0, scale=1, size=(n, d))
-hist, rescale = private_measure_via_random_walk(X, epsilon=0.70, display=True)
-print(hist)
-# %%
-plt.hist(hist)
+hist, rescale = private_measure_via_random_walk(X, epsilon=0.05, display=True)
+
 # %%
