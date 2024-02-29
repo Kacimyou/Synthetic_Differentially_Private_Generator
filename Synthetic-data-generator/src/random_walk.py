@@ -15,6 +15,7 @@ def get_i_k(j):
     Returns:
         tuple: A tuple containing the values of i and k.
     """
+    assert j >= 0, "Error: j should be positive"
     if j == 1:
         return (0, 1)
     elif j == 2:
@@ -26,20 +27,22 @@ def get_i_k(j):
         return (i + 1, 2 * k + 1)
 
 
-def random_walk_laplace(n):
+def random_walk_laplace(m):
     """
     Generate Laplace noise for a random walk.
 
     Parameters:
-        n (int): Length of the random walk.
+        m (int): Length of the random walk.
 
     Returns:
         array-like: Array of Laplace noise with scale parameter L + 2.
     """
 
-    L = int(np.log2(n))
+    assert m >= 0, "Error: argument should be positive"
 
-    laplace_noise = np.random.laplace(loc=0, scale=L + 2, size=n)
+    L = int(np.log2(m))
+
+    laplace_noise = np.random.laplace(loc=0, scale=L + 2, size=m)
 
     return laplace_noise
 
@@ -49,7 +52,7 @@ def phi_bar_i_k(i, k, t):
     Compute the j-th Schauder basis function at time points t.
 
     Parameters:
-        j (int): Index of the basis function.
+        i (int): Index of the basis function.
         k (int): Index of the basis function.
         t (float or array-like): Time points at which to evaluate the function.
 
@@ -73,7 +76,7 @@ def phi_bar(j, t):
     Compute the j-th Schauder basis function at time points t.
 
     Parameters:
-        j (int): Index of the basis function.
+        j (int): Index of the basis function. Converted via get_index(j) to tuple index
         t (float or array-like): Time points at which to evaluate the function.
 
     Returns:
@@ -103,6 +106,8 @@ def psi_bar_i_k(i, k, t):
     if (i, k) == (0, 1):
         return np.ones(len(t))
     psi_values = np.zeros(len(t))
+
+    # TODO Make this cleaner (works fine)
 
     psi_values[t - k / 2**i > 0] = -(2 ** (i - 1))
     psi_values[(t - k / 2**i <= 0)] = 2 ** (i - 1)
@@ -134,30 +139,30 @@ def psi_bar_j(j, t):
     return psi_bar_i_k(i, k, t)
 
 
-def precompute_basis_index(n):
+def precompute_basis_index(m):
     """
-    Precompute basis functions for given length n.
+    Precompute basis functions for given length m.
 
     Parameters:
-        n (int): Length of the basis function array.
+        m (int): Length of the basis function array.
 
     Returns:
         list: List of tuples containing the precomputed i and k index values.
     """
 
     basis_index = []
-    for j in range(1, n + 1):
+    for j in range(1, m + 1):
         i, k = get_i_k(j)
         basis_index.append((i, k))
     return basis_index
 
 
-def precompute_psi_bar(n, basis_index, t_values):
+def precompute_psi_bar(m, basis_index, t_values):
     """
     Precompute psi_bar values for given basis functions index and time values.
 
     Parameters:
-        n (int): Length of the psi_bar array.
+        m (int): Length of the psi_bar array = length of noise we are going to add.
         basis_index (list): List of tuples containing indexs i and k values.
         t_values (array-like): Array of time values.
 
@@ -165,11 +170,11 @@ def precompute_psi_bar(n, basis_index, t_values):
         array-like: Array of precomputed psi_bar values.
     """
 
-    psi_values = np.zeros((n, len(t_values)))
-    for j in range(1, n + 1):
+    psi_values = np.zeros((m, len(t_values)))
+    for j in range(1, m + 1):
         i, k = basis_index[j - 1]
         psi_values[j - 1] = psi_bar_i_k(i, k, t_values)
-    return psi_values / n
+    return psi_values / m
 
 
 def super_regular_noise(m, n, epsilon):
@@ -222,7 +227,7 @@ def minimize_signed_measure(omega, nu):
     Returns:
         float: DP-probability measure as close as possible so nu w.r.t to Wasserstein metric
     """
-    n = len(omega)
+    m = len(omega)
 
     def objective_function(nu_b):
         """
@@ -235,7 +240,7 @@ def minimize_signed_measure(omega, nu):
             float: The value of the objective function.
         """
         obj = 0
-        for k in range(n):
+        for k in range(m):
             if k == n - 1:
                 obj += (1 - omega[k]) * np.abs(np.sum(nu_b[:k]) - np.sum(nu[:k]))
             else:
@@ -290,14 +295,16 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
 
     assert d == 1, "Error: d>1 is not implemented for this method at the moment"
 
-    histogram, rescaling_factors = histogram_estimator(X, adaptative)
-
     if adaptative == True:
         h = n ** (-1 / (2 + d))
         h_inverse = 1 / h
         bin_per_axis = int(np.ceil(h_inverse))
     else:
         bin_per_axis = n
+
+    histogram, rescaling_factors = histogram_estimator(
+        X, h=1 / n, adaptative=adaptative
+    )
 
     privacy_noise = super_regular_noise(bin_per_axis, n, epsilon)
 
@@ -316,7 +323,7 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
         bar_width = 1 / bin_per_axis
 
         plt.scatter(bins_edges, histogram, label="True histogram")
-        plt.scatter(bins_edges, noisy_histogram, label="Noisy signed measure")
+        # plt.scatter(bins_edges, noisy_histogram, label="Noisy signed measure")
         plt.scatter(bins_edges, prob_measure, label="Final histogram prob")
         plt.legend()
         plt.show()
@@ -325,16 +332,14 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
 
 
 # %%
-super_regular_noise(50, 1000, 0.2)
 
-# %%
-
-n = 10000
+n = 500
 d = 1
 
-# %%
-
 X = np.random.normal(loc=0, scale=1, size=(n, d))
-hist, rescale = private_measure_via_random_walk(X, epsilon=0.05, display=True)
+
+hist, rescale = private_measure_via_random_walk(
+    X, epsilon=0.4, display=True, adaptative=True
+)
 
 # %%

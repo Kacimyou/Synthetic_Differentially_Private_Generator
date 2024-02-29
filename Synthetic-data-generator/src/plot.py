@@ -21,14 +21,14 @@ def get_histograms(args_dict):
     delta = args_dict.get("delta", 0.2)
     alpha = args_dict.get("alpha", 0.2)
 
-    # X = np.random.normal(loc=0, scale=1, size=(n, d))
+    X = np.random.normal(loc=0, scale=1, size=(n, d))
     # X = np.random.rand(10000, 2)
     # Set mean and covariance matrix
     mean = [0, 1]
     covariance_matrix = [[0.1, 0.4], [0.4, 1]]
 
     # Generate random sample
-    X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
+    #X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
     # TODO : FIX data type problem with random.rand vs random.normal (chiant)
 
     # Perform histogram estimation
@@ -136,11 +136,11 @@ def histogram_comparaison(args_dict, privacy):
 
 args_dict = {
     "adaptative": True,
-    "m": 5000,
+    "m": 10000,
     "d": 2,
-    "n": 15000,
+    "n": 10000,
     "delta": 0.1,
-    "alpha": 0.99,
+    "alpha": 0.5,
 }
 
 histogram_comparaison(args_dict, privacy="perturbed")
