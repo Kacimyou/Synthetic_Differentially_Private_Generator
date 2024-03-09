@@ -241,7 +241,7 @@ def minimize_signed_measure(omega, nu):
         """
         obj = 0
         for k in range(m):
-            if k == n - 1:
+            if k == m - 1:
                 obj += (1 - omega[k]) * np.abs(np.sum(nu_b[:k]) - np.sum(nu[:k]))
             else:
                 obj += (omega[k + 1] - omega[k]) * np.abs(
@@ -263,7 +263,7 @@ def minimize_signed_measure(omega, nu):
         return np.sum(x) - 1
 
     # Initial guess for νb
-    nu_prob_0 = np.ones(n) / n
+    nu_prob_0 = np.ones(m) / m
 
     # Constraints
     constraints = [
@@ -272,7 +272,7 @@ def minimize_signed_measure(omega, nu):
     ]
 
     # Bounds for νb(ωi)
-    bounds = [(0, 1)] * n
+    bounds = [(0, 1)] * m
 
     # Solve the optimization problem
     result = minimize(
@@ -319,9 +319,6 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
 
         print("Noisy hist", noisy_histogram)
         bins_edges = np.arange(0, bin_per_axis) / bin_per_axis
-
-        bar_width = 1 / bin_per_axis
-
         plt.scatter(bins_edges, histogram, label="True histogram")
         # plt.scatter(bins_edges, noisy_histogram, label="Noisy signed measure")
         plt.scatter(bins_edges, prob_measure, label="Final histogram prob")
