@@ -50,11 +50,55 @@ def private_synthetic_data(true_data, test_functions, reduced_space, sigma, k):
     return synthetic_data
 
 
+def is_bin_zero(point, bin_index, bin_width):
+    """
+    Check if a given index corresponds to the bin 0.
+
+    Parameters:
+        point (numpy.ndarray): Point to test.
+        bin_index (tuple): Index of the bin in the hypercube.
+        bin_width (float): Width of each bin in the hypercube.
+
+    Returns:
+        int: 1 if the input is the bin 0, otherwise 0.
+    """
+    assert len(bin_index) == len(
+        point
+    ), "Dimension of bin index and point must be equal."
+
+    bin_center = [(i + 0.5) * bin_width for i in bin_index]  # Compute bin center
+    distance = max(
+        abs(point[i] - bin_center[i]) for i in range(len(bin_index))
+    )  # Compute infinity norm distance
+    if (
+        distance <= bin_width / 2
+    ):  # Check if the distance is within half of the bin width
+        return 1
+    return 0
+
+
+def generate_bin_check_functions(bin_width, bin_indices):
+    """
+    Generate a list of lambda functions to check if a point falls into specific bins.
+
+    Parameters:
+        bin_width (float): Width of each bin in the hypercube.
+        bin_indices (list of tuples): List of bin indices.
+
+    Returns:
+        list: List of lambda functions to check if a point falls into specific bins.
+    """
+    return [
+        lambda x, bin_index=bin_index: is_bin_zero(x, bin_index, bin_width)
+        for bin_index in bin_indices
+    ]
+
+
 # %%
 # Example usage:
-true_data = np.random.normal(loc=5, scale=1, size=1000)  # Example true data
+true_data = np.random.normal(loc=0, scale=1, size=1000)  # Example true data
 test_functions = [lambda x: x]  # Example test functions
-reduced_space = np.linspace(3, 6, 20)  # Example reduced space
+reduced_space = np.linspace(-1, 1, 20)  # Example reduced space
 sigma = 0.001  # Example noise parameter
 k = 100  # Example number of synthetic data points
 synthetic_data = private_synthetic_data(
@@ -63,3 +107,20 @@ synthetic_data = private_synthetic_data(
 
 plt.hist(synthetic_data)
 # %%
+# Example 2D histogram parameters
+num_bins = 10
+bin_width = 0.1
+
+# Index of the bin to check (bin 0 in this case)
+bin_index = (0, 0)
+
+# Point to test
+point = np.array([0.05, 0.05])  # Point lies within the bin 0
+
+# Check if the point falls into the bin 0
+result = is_bin_zero(point, bin_index, bin_width)
+result
+
+# %%
+test = lambda x: is_bin_zero(x, bin_index, bin_width)
+test(point)
