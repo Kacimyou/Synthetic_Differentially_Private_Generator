@@ -45,14 +45,14 @@ def histogram_estimator(X, h=0.1, adaptative=True):
     assert h < 1 and h > 0, "Error: h must be between 0 and 1"
 
     # Check if 1/h is an integer, and convert if necessary
-    m_inverse = 1 / h
-    if not m_inverse.is_integer():
-        m_per_axis = int(np.ceil(m_inverse))
+    h_inverse = 1 / h
+    if not h_inverse.is_integer():
+        m_per_axis = int(np.ceil(h_inverse))
         print(
             f"Warning: 1/h is not an integer. Converting to the closest integer: {m_per_axis}"
         )
     else:
-        m_per_axis = int(m_inverse)
+        m_per_axis = int(h_inverse)
 
     # Initialize the histogram estimator
     hist_shape = (m_per_axis,) * d
@@ -114,8 +114,6 @@ def generate_data_from_hist(hist_estimator, m, rescaling_factor=[0, 1], shuffle=
     binwidth = (
         1 / hist_estimator.shape[0]
     )  # Assuming the binwidth is the same in each dimension
-
-    # Create synthetic data points based on the multi-dimensional indices
 
     # Create synthetic data points based on the multi-dimensional indices
     if not (shuffle):
