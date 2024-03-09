@@ -28,7 +28,7 @@ def get_histograms(args_dict):
     covariance_matrix = [[0.1, 0.4], [0.4, 1]]
 
     # Generate random sample
-    #X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
+    # X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
     # TODO : FIX data type problem with random.rand vs random.normal (chiant)
 
     # Perform histogram estimation
@@ -138,7 +138,7 @@ args_dict = {
     "adaptative": True,
     "m": 10000,
     "d": 2,
-    "n": 10000,
+    "n": 100000,
     "delta": 0.1,
     "alpha": 0.5,
 }

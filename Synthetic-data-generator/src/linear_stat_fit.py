@@ -1,5 +1,7 @@
+# %%
 import numpy as np
 from scipy.optimize import minimize
+import matplotlib.pyplot as plt
 
 
 def laplace_noise(scale, size):
@@ -48,12 +50,16 @@ def private_synthetic_data(true_data, test_functions, reduced_space, sigma, k):
     return synthetic_data
 
 
+# %%
 # Example usage:
-true_data = np.random.normal(loc=5, scale=1, size=100)  # Example true data
-test_functions = [lambda x: x, lambda x: x**2]  # Example test functions
-reduced_space = np.linspace(3, 6, 10)  # Example reduced space
+true_data = np.random.normal(loc=5, scale=1, size=1000)  # Example true data
+test_functions = [lambda x: x]  # Example test functions
+reduced_space = np.linspace(3, 6, 20)  # Example reduced space
 sigma = 0.001  # Example noise parameter
 k = 100  # Example number of synthetic data points
 synthetic_data = private_synthetic_data(
     true_data, test_functions, reduced_space, sigma, k
 )
+
+plt.hist(synthetic_data)
+# %%
