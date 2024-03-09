@@ -39,6 +39,7 @@ def tsp(points):
     for i, p1 in enumerate(points):
         for j, p2 in enumerate(points):
             if i != j:
+                # TODO Check if norm L2 should be used
                 weight = np.linalg.norm(p1 - p2)
                 G.add_edge(i, j, weight=weight)
     tsp_path = nx.approximation.traveling_salesman_problem(G, cycle=False)
@@ -136,7 +137,8 @@ def from_multi_to_1D(histogram):
         histogram (numpy.ndarray): Multidimensional histogram.
 
     Returns:
-        tuple: One-dimensional histogram, reverse mapping dictionary, shape of the original histogram.
+        tuple: One-dimensional histogram, reverse mapping dictionary, shape of the original histogram,
+        omega a list of value between 0 and TSP(T).
     """
 
     m = len(histogram)
@@ -151,7 +153,9 @@ def from_multi_to_1D(histogram):
 
         one_d_histogram[foward_dict.get(index)[1]] = histogram[index]
 
-    return one_d_histogram, reverse_dict, (m, d)
+    omega = get_omega(foward_dict)
+
+    return one_d_histogram, reverse_dict, (m, d), omega
 
 
 def from_1D_to_multi(one_d_histogram, reverse_dict, shape):
@@ -182,18 +186,16 @@ def from_1D_to_multi(one_d_histogram, reverse_dict, shape):
 
 
 # %%
+
+##Test that the application of both mapping gives back the original histogram
 n = 1000
-d = 4
+d = 1
 
 X = np.random.normal(loc=0, scale=1, size=(n, d))
 
 hist, rescale = histogram_estimator(X)
 
-# %%
-
-one_dim_array, reverse_dict, shape = from_multi_to_1D(hist)
-
+one_dim_array, reverse_dict, shape, omega = from_multi_to_1D(hist)
 
 multi_dim = from_1D_to_multi(one_dim_array, reverse_dict, shape)
 print(multi_dim == hist)
-# %%

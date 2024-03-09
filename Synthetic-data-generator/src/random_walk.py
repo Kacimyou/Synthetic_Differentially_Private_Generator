@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from histogram_estimator import histogram_estimator, generate_data_from_hist
+from TSP import *
 
 
 def get_i_k(j):
@@ -306,13 +307,21 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
         X, h=1 / n, adaptative=adaptative
     )
 
-    privacy_noise = super_regular_noise(bin_per_axis, n, epsilon)
+    privacy_noise = super_regular_noise(bin_per_axis**d, n, epsilon)
 
-    noisy_histogram = histogram + privacy_noise
+    one_dim_array, reverse_dict, shape, omega = from_multi_to_1D(histogram)
 
-    omega = np.arange(0, bin_per_axis) / bin_per_axis
+    assert len(one_dim_array) == len(
+        privacy_noise
+    ), "Error: one_dim_array and privacy_noise should have the same length"
 
-    prob_measure = minimize_signed_measure(omega, noisy_histogram)
+    noisy_1D_histogram = one_dim_array + privacy_noise
+
+    prob_measure = minimize_signed_measure(omega, noisy_1D_histogram)
+
+    noisy_histogram = from_1D_to_multi(
+        one_d_histogram=noisy_1D_histogram, reverse_dict=reverse_dict, shape=shape
+    )
 
     if display:
         print("histogram", histogram)
@@ -325,12 +334,12 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
         plt.legend()
         plt.show()
 
-    return prob_measure, rescaling_factors
+    return noisy_histogram, rescaling_factors
 
 
 # %%
 
-n = 500
+n = 5000
 d = 1
 
 X = np.random.normal(loc=0, scale=1, size=(n, d))
