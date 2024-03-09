@@ -294,8 +294,6 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
     # Calculate the dimensions of the data
     n, d = X.shape
 
-    assert d == 1, "Error: d>1 is not implemented for this method at the moment"
-
     if adaptative == True:
         h = n ** (-1 / (2 + d))
         h_inverse = 1 / h
@@ -317,22 +315,18 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
 
     noisy_1D_histogram = one_dim_array + privacy_noise
 
-    prob_measure = minimize_signed_measure(omega, noisy_1D_histogram)
+    omega_scaled = omega / omega[-1]
+
+    prob_measure = minimize_signed_measure(omega_scaled, noisy_1D_histogram)
 
     noisy_histogram = from_1D_to_multi(
-        one_d_histogram=noisy_1D_histogram, reverse_dict=reverse_dict, shape=shape
+        one_d_histogram=prob_measure, reverse_dict=reverse_dict, shape=shape
     )
 
     if display:
         print("histogram", histogram)
 
-        print("Noisy hist", noisy_histogram)
-        bins_edges = np.arange(0, bin_per_axis) / bin_per_axis
-        plt.scatter(bins_edges, histogram, label="True histogram")
-        # plt.scatter(bins_edges, noisy_histogram, label="Noisy signed measure")
-        plt.scatter(bins_edges, prob_measure, label="Final histogram prob")
-        plt.legend()
-        plt.show()
+        print("Noisy hist", np.around(noisy_histogram, decimals=2))
 
     return noisy_histogram, rescaling_factors
 
@@ -340,10 +334,13 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
 # %%
 
 n = 5000
-d = 1
+d = 2
 
-X = np.random.normal(loc=0, scale=1, size=(n, d))
+mean = [0, 1]
+covariance_matrix = [[0.1, 0.4], [0.4, 1]]
 
+# Generate random sample
+X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
 hist, rescale = private_measure_via_random_walk(
     X, epsilon=0.4, display=True, adaptative=True
 )
