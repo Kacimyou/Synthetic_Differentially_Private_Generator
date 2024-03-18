@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
+from utils import get_histogram_indices, generate_grid_points
 
 
 def laplace_noise(scale, size):
@@ -12,16 +13,15 @@ def reweight_density(true_data, test_functions, reduced_space, sigma, noise):
     n = len(true_data)
     m = len(reduced_space)
 
+    # Precompute true statistics
+    true_stats = np.array([np.mean([f(x) for x in true_data]) for f in test_functions])
+    reduced_space_stats = np.array(
+        [[f(z) for z in reduced_space] for f in test_functions]
+    )
+    print("true_stat", true_stats, len(true_stats))
+
     def objective(h):
-        linear_stats = np.array(
-            [
-                np.sum([f(z) * h[idx] for idx, z in enumerate(reduced_space)])
-                for f in test_functions
-            ]
-        )
-        true_stats = np.array(
-            [np.mean([f(x) for x in true_data]) for f in test_functions]
-        )
+        linear_stats = np.dot(reduced_space_stats, h)
         return np.max(np.abs(linear_stats - true_stats - noise))
 
     def constraint(h):
@@ -38,7 +38,27 @@ def reweight_density(true_data, test_functions, reduced_space, sigma, noise):
 
 
 def bootstrap_data(reweighted_density, reduced_space, k):
-    return np.random.choice(reduced_space, size=k, p=reweighted_density)
+    """
+    Generate synthetic data points by bootstrapping from the reduced space.
+
+    Parameters:
+        reweighted_density (array_like): Reweighted density values for each point in the reduced space.
+        reduced_space (list or array_like): Reduced space from which to sample data points.
+        k (int): Number of synthetic data points to generate.
+
+    Returns:
+        array_like: Synthetic data points sampled from the reduced space.
+    """
+    # Normalize reweighted density
+    reweighted_density /= np.sum(reweighted_density)
+
+    # Choose indices from the reduced space based on reweighted density
+    chosen_indices = np.random.choice(len(reduced_space), size=k, p=reweighted_density)
+
+    # Retrieve the corresponding points from the reduced space
+    synthetic_data = [reduced_space[index] for index in chosen_indices]
+
+    return np.array(synthetic_data)
 
 
 def private_synthetic_data(true_data, test_functions, reduced_space, sigma, k):
@@ -46,11 +66,13 @@ def private_synthetic_data(true_data, test_functions, reduced_space, sigma, k):
     reweighted_density = reweight_density(
         true_data, test_functions, reduced_space, sigma, noise
     )
+
+    # print(reweighted_density)
     synthetic_data = bootstrap_data(reweighted_density, reduced_space, k)
     return synthetic_data
 
 
-def is_bin_zero(point, bin_index, bin_width):
+def is_in_bin(point, bin_index, bin_width):
     """
     Check if a given index corresponds to the bin 0.
 
@@ -60,7 +82,7 @@ def is_bin_zero(point, bin_index, bin_width):
         bin_width (float): Width of each bin in the hypercube.
 
     Returns:
-        int: 1 if the input is the bin 0, otherwise 0.
+        int: 1 if the input is the bin, otherwise 0.
     """
     assert len(bin_index) == len(
         point
@@ -77,7 +99,7 @@ def is_bin_zero(point, bin_index, bin_width):
     return 0
 
 
-def generate_bin_check_functions(bin_width, bin_indices):
+def generate_bin_check_functions(m, d):
     """
     Generate a list of lambda functions to check if a point falls into specific bins.
 
@@ -87,15 +109,17 @@ def generate_bin_check_functions(bin_width, bin_indices):
 
     Returns:
         list: List of lambda functions to check if a point falls into specific bins.
+
+
     """
-    return [
-        lambda x, bin_index=bin_index: is_bin_zero(x, bin_index, bin_width)
-        for bin_index in bin_indices
-    ]
+    bin_indices = get_histogram_indices(m, d)
+    bin_width = 1 / m
+
+    return [lambda x: is_in_bin(x, bin_index, bin_width) for bin_index in bin_indices]
 
 
 # %%
-# Example usage:
+# Example usage with 1 test function (useless):
 true_data = np.random.normal(loc=0, scale=1, size=1000)  # Example true data
 test_functions = [lambda x: x]  # Example test functions
 reduced_space = np.linspace(-1, 1, 20)  # Example reduced space
@@ -104,6 +128,7 @@ k = 100  # Example number of synthetic data points
 synthetic_data = private_synthetic_data(
     true_data, test_functions, reduced_space, sigma, k
 )
+
 
 plt.hist(synthetic_data)
 # %%
@@ -118,9 +143,29 @@ bin_index = (0, 0)
 point = np.array([0.05, 0.05])  # Point lies within the bin 0
 
 # Check if the point falls into the bin 0
-result = is_bin_zero(point, bin_index, bin_width)
-result
+result = is_in_bin(point, bin_index, bin_width)
 
 # %%
-test = lambda x: is_bin_zero(x, bin_index, bin_width)
-test(point)
+m = 3
+d = 2
+
+for i in range(m**d):
+    print(generate_bin_check_functions(m, d)[i](point))
+
+# %%
+# Example usage with 1 test function (useless):
+n = 100
+d = 2
+true_data = np.random.normal(loc=0, scale=1, size=(n, d))  # Example true data
+test_functions = generate_bin_check_functions(5, 2)
+
+reduced_space = generate_grid_points(10, 2)  # Example reduced space
+sigma = 0.001  # Example noise parameter
+k = 100  # Example number of synthetic data points
+synthetic_data = private_synthetic_data(
+    true_data, test_functions, reduced_space, sigma, k
+)
+
+
+plt.hist(synthetic_data[:, 0])
+# %%
