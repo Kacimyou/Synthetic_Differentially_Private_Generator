@@ -324,9 +324,9 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
     )
 
     if display:
-        print("histogram", histogram)
+        print("histogram", "\n", histogram)
 
-        print("Noisy hist", np.around(noisy_histogram, decimals=2))
+        print("Noisy hist", "\n", np.around(noisy_histogram, decimals=3))
 
     return noisy_histogram, rescaling_factors
 
@@ -334,7 +334,7 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
 # %%
 
 n = 5000
-d = 2
+d = 1
 
 mean = [0, 1]
 covariance_matrix = [[0.1, 0.4], [0.4, 1]]
