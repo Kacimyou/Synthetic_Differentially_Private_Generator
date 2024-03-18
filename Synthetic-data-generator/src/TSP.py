@@ -25,7 +25,23 @@ def generate_grid_points(m, d):
     return points
 
 
-def tsp(points):
+def is_neighbour(p1, p2, neighbour_distance, norm=2):
+    """
+    Check if two points are neighbours based on a given neighbour distance.
+
+    Parameters:
+        p1 (numpy.ndarray): First point.
+        p2 (numpy.ndarray): Second point.
+        neighbour_distance (float): Neighbour distance threshold.
+
+    Returns:
+        bool: True if the distance between p1 and p2 is less than or equal to neighbour_distance, False otherwise.
+    """
+    distance = np.linalg.norm(p1 - p2, ord=norm)
+    return distance <= neighbour_distance
+
+
+def tsp(points, norm=2):
     """
     Calculate the Traveling Salesman Problem (TSP) path given a finite metric space.
 
@@ -35,14 +51,23 @@ def tsp(points):
     Returns:
         list: TSP path as a list of points.
     """
+
+    assert len(points) > 1, "Error: Length of points inferior or equal to 0."
+    # neighbour_distance = np.linalg.norm(points[0]-points[1], ord = norm)
+
     G = nx.Graph()
+
     for i, p1 in enumerate(points):
         for j, p2 in enumerate(points):
-            if i != j:
-                # TODO Check if norm L2 should be used
-                weight = np.linalg.norm(p1 - p2)
-                G.add_edge(i, j, weight=weight)
-    tsp_path = nx.approximation.traveling_salesman_problem(G, cycle=False)
+            # if is_neighbour(p1, p2, neighbour_distance, norm):
+            # TODO Check impact of norm
+            weight = np.linalg.norm(p1 - p2, ord=norm)
+            G.add_edge(i, j, weight=weight)
+
+    # TODO Clean solving algorithm, precising what method is used.
+    # tsp_path = nx.approximation.traveling_salesman_problem(G, cycle=False)
+    tsp_path = nx.approximation.greedy_tsp(G)
+    tsp_path.pop()
     tsp_path = [points[i] for i in tsp_path]
     return tsp_path
 
@@ -187,13 +212,37 @@ def from_1D_to_multi(one_d_histogram, reverse_dict, shape):
 
 # %%
 
+points = generate_grid_points(11, 2)
+
+# %%
+tsp_path = tsp(points, norm=2)
+
+plt.scatter(*zip(*points))
+for i in range(len(tsp_path) - 1):
+    plt.arrow(
+        tsp_path[i][0],
+        tsp_path[i][1],
+        tsp_path[i + 1][0] - tsp_path[i][0],
+        tsp_path[i + 1][1] - tsp_path[i][1],
+        color="red",
+        head_width=0.03,
+        head_length=0.05,
+    )
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.title("Traveling Salesman Problem")
+plt.legend()
+plt.grid(True)
+# %%
+
 ##Test that the application of both mapping gives back the original histogram
-n = 1000
-d = 1
+n = 10000
+d = 3
 
 X = np.random.normal(loc=0, scale=1, size=(n, d))
 
 hist, rescale = histogram_estimator(X)
+
 
 one_dim_array, reverse_dict, shape, omega = from_multi_to_1D(hist)
 
