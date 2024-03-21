@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.stats as stats
 
 
 def histogram_estimator(X, h=0.1, adaptative=True):
@@ -87,13 +86,13 @@ def histogram_estimator(X, h=0.1, adaptative=True):
     return hist, rescaling_factors
 
 
-def generate_data_from_hist(hist_estimator, m, rescaling_factor=[0, 1], shuffle=True):
+def generate_data_from_hist(hist_estimator, k, rescaling_factor=[0, 1], shuffle=True):
     """
     Generates synthetic data points according to the empirical distribution represented by fbm_estimator.
 
     Parameters:
     - hist_estimator: numpy array, the normalized histogram estimator representing the empirical distribution.
-    - m: int, the number of data points to generate.
+    - k: int, the number of data points to generate.
 
     Returns:
     - synthetic_data: numpy array, the generated synthetic data points.
@@ -103,7 +102,7 @@ def generate_data_from_hist(hist_estimator, m, rescaling_factor=[0, 1], shuffle=
     flattened_hist = hist_estimator.flatten()
 
     # Generate m indices according to the empirical distribution
-    indices = np.random.choice(len(flattened_hist), size=m, p=flattened_hist)
+    indices = np.random.choice(len(flattened_hist), size=k, p=flattened_hist)
 
     # Convert the flat indices to multi-dimensional indices
     multi_dim_indices = np.unravel_index(indices, hist_estimator.shape)
