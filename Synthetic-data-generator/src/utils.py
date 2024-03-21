@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import itertools
 
@@ -33,3 +34,28 @@ def get_histogram_indices(m, d):
     """
     index_ranges = [range(m) for _ in range(d)]
     return list(itertools.product(*index_ranges))
+
+
+def scale(X):
+    # Calculate the dimensions of the data
+    n, d = X.shape
+
+    # Calculate min and max along each axis
+    min_values = np.min(X, axis=0)
+    max_values = np.max(X, axis=0)
+    rescaling_factors = np.vstack((min_values, max_values))
+
+    """if np.min(X, axis=0) < 0 or np.max(X, axis=0) > 1:
+        # Scale the data to [0, 1] range
+        X_scaled = (X - np.min(X, axis=0)) / (np.max(X, axis=0) - np.min(X, axis=0))
+    
+    #elif np.min(X, axis=0) >= 0 and np.max(X, axis=0) <= 1:
+        
+        X_scaled = X
+    """
+
+    X_scaled = (X - rescaling_factors[0]) / (
+        rescaling_factors[1] - rescaling_factors[0]
+    )
+
+    return X_scaled, rescaling_factors
