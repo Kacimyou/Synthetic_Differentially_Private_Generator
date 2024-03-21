@@ -1,5 +1,7 @@
+# %%
 import numpy as np
 from histogram_estimator import generate_data_from_hist, histogram_estimator
+import matplotlib.pyplot as plt
 
 
 def smooth_histogram(hist_estimator, delta):
@@ -13,7 +15,7 @@ def smooth_histogram(hist_estimator, delta):
     Returns:
     - private_hist_estimator: numpy array, the differentially private histogram estimator.
     """
-
+    assert 1 > delta > 0, "Error: delta should be between 0 and 1."
     # Apply differential privacy mechanism
 
     bin_number = hist_estimator.shape[0]
@@ -41,7 +43,7 @@ def perturbed_histogram(hist_estimator, epsilon, n):
     Returns:
     - dp_hist: numpy array, differentially private histogram estimator.
     """
-    assert 1 > epsilon > 0, "Error: epsilon should be between 0 and 1"
+    assert epsilon > 0, "Error: epsilon should be strictly positive"
     # sensitivity = 1 / n  # Sensitivity of the histogram estimator
 
     # Generate Laplace noise for each component
@@ -65,10 +67,94 @@ def perturbed_histogram(hist_estimator, epsilon, n):
     return dp_hist
 
 
-def generate_smooth_data(X, k, delta, adaptative, shuffle=True):
+def generate_smooth_data(
+    X, k, epsilon, adaptative=True, shuffle=True, norm="L2", automatic=True
+):
 
-    # Perform histogram estimation
-    hist_estimator, rescaling_factors = histogram_estimator(X, adaptative=adaptative)
+    if norm == "L2":
+
+        m = int(np.ceil(n ** (d / (2 * d + 3))))
+        print(m)
+        if automatic:
+            k = int(n ** ((d + 2) / (2 * d + 3)))  # k must be int
+            delta = n ** (-1 / (d + 3))
+            print(
+                "Parameters k, delta and m where chosen to meet privacy:\n",
+                "k = ",
+                k,
+                "\n",
+                "delta = ",
+                delta,
+                "\n",
+                "m = ",
+                m,
+                "\n",
+            )
+        else:
+            delta = m / ((np.exp(epsilon / k) - 1) * n + m)
+            print(
+                "Warning automatic = False, the parameter given may not guarantee privacy"
+            )
+            print(
+                "k*log((1-delta)/n*delta + 1) = ",
+                k * np.log((1 - delta) * m / (n * delta) + 1),
+                "epsilon =",
+                epsilon,
+                "Is epsilon private =",
+                np.isclose(k * np.log((1 - delta) * m / (n * delta) + 1), epsilon),
+                "\n",
+            )
+            print(
+                epsilon,
+                "-DP achieved:",
+                k * np.log((1 - delta) * m / (n * delta) + 1) <= epsilon,
+            )
+
+        # Perform histogram estimation
+        hist_estimator, rescaling_factors = histogram_estimator(
+            X, adaptative=adaptative, method="smooth_L2"
+        )
+
+    if norm == "KS":
+
+        m = n ** (d / (d + 6))
+        if automatic:
+            k = int(n ** (4 / (d + 6)))  # k must be int
+            delta = m * k / (n * epsilon)
+            print(
+                "Parameters k, delta and m where chosen to meet privacy:\n",
+                "k = ",
+                k,
+                "\n",
+                "delta = ",
+                delta,
+                "\n",
+                "m = ",
+                m,
+                "\n",
+            )
+
+        else:
+            delta = m / ((np.exp(epsilon / k) - 1) * n + m)
+            print(
+                "Warning overwrite = False, the parameter given may not guarantee privacy "
+            )
+            print(
+                "k*log((1-delta)/n*delta + 1) = ",
+                k * np.log((1 - delta) * m / (n * delta) + 1),
+                "epsilon =",
+                epsilon,
+                "Is epsilon private =",
+                np.isclose(
+                    k * np.log((1 - delta) * m / (n * delta) + 1), epsilon, atol=1e-6
+                ),
+                "\n",
+            )
+
+        # Perform histogram estimation
+        hist_estimator, rescaling_factors = histogram_estimator(
+            X, adaptative=adaptative, method="smooth_KS"
+        )
 
     # Generate DP synthetic data by smoothing
     DP_hist_smoothed = smooth_histogram(hist_estimator, delta=delta)
@@ -76,8 +162,8 @@ def generate_smooth_data(X, k, delta, adaptative, shuffle=True):
     smoothed_synthetic_data = generate_data_from_hist(
         DP_hist_smoothed, k=k, rescaling_factor=rescaling_factors, shuffle=shuffle
     )
-
-    return smoothed_synthetic_data
+    print("delta used=", delta)
+    return smoothed_synthetic_data, hist_estimator
 
 
 def generate_perturbated_data(X, k, epsilon, adaptative=True, shuffle=True):
@@ -95,3 +181,27 @@ def generate_perturbated_data(X, k, epsilon, adaptative=True, shuffle=True):
     )
 
     return perturbed_synthetic_data, hist_estimator
+
+
+# %%
+
+
+n = 5000
+d = 2
+
+mean = [0, 1]
+covariance_matrix = [[1, 0.8], [0.8, 1]]
+
+# Generate random sample
+X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
+
+perturbated, hist = generate_smooth_data(
+    X, k=500, epsilon=0.2, adaptative=True, norm="L2", automatic=True
+)
+
+perturbated, hist = generate_perturbated_data(X, k=5000, epsilon=0.3, adaptative=True)
+
+plt.scatter(X[:, 0], X[:, 1], alpha=0.5)
+plt.scatter(perturbated[:, 0], perturbated[:, 1], alpha=0.5)
+# %%
+np.isclose(0.20000000000048782, 0.21)
