@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
-from utils import get_histogram_indices, generate_grid_points
+from utils import get_histogram_indices, generate_grid_points, scale
 
 
 def laplace_noise(scale, size):
@@ -12,9 +12,10 @@ def laplace_noise(scale, size):
 def reweight_density(true_data, test_functions, reduced_space, sigma, noise):
     n = len(true_data)
     m = len(reduced_space)
+    X_scaled, rescaling_factors = scale(true_data)
 
     # Precompute true statistics
-    true_stats = np.array([np.mean([f(x) for x in true_data]) for f in test_functions])
+    true_stats = np.array([np.mean([f(x) for x in X_scaled]) for f in test_functions])
     reduced_space_stats = np.array(
         [[f(z) for z in reduced_space] for f in test_functions]
     )
@@ -49,7 +50,7 @@ def bootstrap_data(reweighted_density, reduced_space, k):
     Returns:
         array_like: Synthetic data points sampled from the reduced space.
     """
-    # Normalize reweighted density
+    # Normalize reweighted density, prevent from rounding error
     reweighted_density /= np.sum(reweighted_density)
 
     # Choose indices from the reduced space based on reweighted density
@@ -67,7 +68,7 @@ def private_synthetic_data(true_data, test_functions, reduced_space, sigma, k):
         true_data, test_functions, reduced_space, sigma, noise
     )
 
-    # print(reweighted_density)
+    print(reweighted_density)
     synthetic_data = bootstrap_data(reweighted_density, reduced_space, k)
     return synthetic_data
 
@@ -85,7 +86,7 @@ def is_in_bin(point, bin_index, bin_width):
         int: 1 if the input is the bin, otherwise 0.
     """
     assert len(bin_index) == len(
-        point
+        list(point)
     ), "Dimension of bin index and point must be equal."
 
     bin_center = [(i + 0.5) * bin_width for i in bin_index]  # Compute bin center
@@ -115,7 +116,12 @@ def generate_bin_check_functions(m, d):
     bin_indices = get_histogram_indices(m, d)
     bin_width = 1 / m
 
-    return [lambda x: is_in_bin(x, bin_index, bin_width) for bin_index in bin_indices]
+    return [
+        lambda x, bin_index=bin_index, bin_width=bin_width: is_in_bin(
+            x, bin_index, bin_width
+        )
+        for bin_index in bin_indices
+    ]
 
 
 # %%
@@ -140,32 +146,42 @@ bin_width = 0.1
 bin_index = (0, 0)
 
 # Point to test
-point = np.array([0.05, 0.05])  # Point lies within the bin 0
+point = np.array([0.52, 0.05])  # Point lies within the bin 0
 
 # Check if the point falls into the bin 0
 result = is_in_bin(point, bin_index, bin_width)
-
+result
 # %%
-m = 3
+m = 4
 d = 2
 
+print(get_histogram_indices(m, d))
 for i in range(m**d):
     print(generate_bin_check_functions(m, d)[i](point))
 
 # %%
-# Example usage with 1 test function (useless):
-n = 100
-d = 2
-true_data = np.random.normal(loc=0, scale=1, size=(n, d))  # Example true data
-test_functions = generate_bin_check_functions(5, 2)
+# Example usage with multiple test functions, what we do in practice:
+n = 10000
+d = 1
+m = 10
+true_data = np.random.normal(loc=0.5, scale=1 / 2, size=(n, d))  # Example true data
+test_functions = generate_bin_check_functions(m, d)
 
-reduced_space = generate_grid_points(10, 2)  # Example reduced space
-sigma = 0.001  # Example noise parameter
-k = 100  # Example number of synthetic data points
+reduced_space = generate_grid_points(m, d)  # Example reduced space
+sigma = 0.01  # Example noise parameter
+k = 1000  # Example number of synthetic data points
 synthetic_data = private_synthetic_data(
     true_data, test_functions, reduced_space, sigma, k
 )
 
 
-plt.hist(synthetic_data[:, 0])
+plt.hist(synthetic_data[:, 0], bins=m)
+
+
 # %%
+
+for x in true_data:
+    print(test_functions[0](x))
+# %%
+
+test_functions[0]([0.2, 0.2])
