@@ -29,24 +29,24 @@ def smooth_histogram(hist_estimator, delta):
     return dp_hist
 
 
-def perturbed_histogram(hist_estimator, alpha, n):
+def perturbed_histogram(hist_estimator, epsilon, n):
     """
     Add Laplacian noise to each component of the histogram estimator.
 
     Parameters:
     - hist_estimator: numpy array, the normalized histogram estimator.
-    - alpha: float, privacy parameter.
+    - epsilon: float, privacy parameter.
     - n : int, number of samples.
 
     Returns:
     - dp_hist: numpy array, differentially private histogram estimator.
     """
-    assert 1 > alpha > 0, "Error: alpha should be between 0 and 1"
+    assert 1 > epsilon > 0, "Error: epsilon should be between 0 and 1"
     # sensitivity = 1 / n  # Sensitivity of the histogram estimator
 
     # Generate Laplace noise for each component
 
-    laplace_noise = np.random.laplace(scale=8 / alpha**2, size=hist_estimator.shape)
+    laplace_noise = np.random.laplace(scale=8 / epsilon**2, size=hist_estimator.shape)
 
     # Add Laplace noise to the histogram estimator
     dp_hist = hist_estimator + laplace_noise / n
@@ -63,3 +63,35 @@ def perturbed_histogram(hist_estimator, alpha, n):
     ), "Error: Sum of private histogram elements is not equal to 1."
 
     return dp_hist
+
+
+def generate_smooth_data(X, k, delta, adaptative, shuffle=True):
+
+    # Perform histogram estimation
+    hist_estimator, rescaling_factors = histogram_estimator(X, adaptative=adaptative)
+
+    # Generate DP synthetic data by smoothing
+    DP_hist_smoothed = smooth_histogram(hist_estimator, delta=delta)
+
+    smoothed_synthetic_data = generate_data_from_hist(
+        DP_hist_smoothed, k=k, rescaling_factor=rescaling_factors, shuffle=shuffle
+    )
+
+    return smoothed_synthetic_data
+
+
+def generate_perturbated_data(X, k, epsilon, adaptative=True, shuffle=True):
+
+    n, d = X.shape
+
+    # Perform histogram estimation
+    hist_estimator, rescaling_factors = histogram_estimator(X, adaptative=adaptative)
+
+    # Generate DP synthetic data by perturbation
+    DP_hist_perturbed = perturbed_histogram(hist_estimator, epsilon=epsilon, n=n)
+
+    perturbed_synthetic_data = generate_data_from_hist(
+        DP_hist_perturbed, k=k, rescaling_factor=rescaling_factors, shuffle=shuffle
+    )
+
+    return perturbed_synthetic_data, hist_estimator
