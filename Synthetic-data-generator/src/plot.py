@@ -22,7 +22,7 @@ def get_histograms(args_dict):
     d = args_dict.get("d", 1)
     n = args_dict.get("n", 10000)
     adaptative = args_dict.get("adaptative", True)
-    m = args_dict.get("m", 10000)
+    k = args_dict.get("k", 10000)
     delta = args_dict.get("delta", 0.2)
     epsilon = args_dict.get("epsilon", 0.2)
 
@@ -41,7 +41,7 @@ def get_histograms(args_dict):
 
     # Generate synthetic data
     synthetic_data = generate_data_from_hist(
-        hist_estimator, m, rescaling_factors, shuffle=True
+        hist_estimator, k, rescaling_factors, shuffle=True
     )
 
     # Generate DP synthetic data by smoothing
@@ -51,10 +51,10 @@ def get_histograms(args_dict):
     DP_hist_perturbed = perturbed_histogram(hist_estimator, epsilon=epsilon, n=n)
 
     smoothed_synthetic_data = generate_data_from_hist(
-        DP_hist_smoothed, m, rescaling_factors, shuffle=True
+        DP_hist_smoothed, k, rescaling_factors, shuffle=True
     )
     perturbed_synthetic_data = generate_data_from_hist(
-        DP_hist_perturbed, m, rescaling_factors, shuffle=True
+        DP_hist_perturbed, k, rescaling_factors, shuffle=True
     )
 
     return (
@@ -141,7 +141,7 @@ def histogram_comparaison(args_dict, privacy):
 
 args_dict = {
     "adaptative": True,
-    "m": 10000,
+    "k": 10000,
     "d": 2,
     "n": 100000,
     "delta": 0.1,
@@ -161,7 +161,7 @@ histogram_comparaison(args_dict, privacy="perturbed")
     perturbed_synthetic_data,
     hist_estimator,
     rescaling_factors,
-) = get_histograms({"adaptative": True, "m": 1000, "d": 1, "n": 1000, "delta": 0.1})
+) = get_histograms({"adaptative": True, "k": 1000, "d": 1, "n": 1000, "delta": 0.1})
 
 # Sort the data
 synthetic_data_sorted = np.sort(synthetic_data[:, 0])
@@ -198,9 +198,9 @@ def smoothing_animation(args_dict, privacy):
     d = args_dict.get("d")
     n = args_dict.get("n")
     adaptative = args_dict.get("adaptative", True)
-    m = args_dict.get("m", 10000)
+    k = args_dict.get("k", 10000)
     delta_values = args_dict.get("delta_values", [0.1])
-    alpha_values = args_dict.get("alpha_values", [0.1])
+    epsilon_values = args_dict.get("epsilon_values", [0.1])
 
     # Generate synthetic data for the initial histogram
     X = np.random.normal(loc=0, scale=1, size=(n, d))
@@ -219,14 +219,14 @@ def smoothing_animation(args_dict, privacy):
             DP_param = delta_values[frame]
             DP_hist = smooth_histogram(hist_estimator, delta=DP_param)
             private_synthetic_data = generate_data_from_hist(
-                DP_hist, m, rescaling_factors, shuffle=True
+                DP_hist, k, rescaling_factors, shuffle=True
             )
         if privacy == "perturbed":
             # Generate synthetic data for the current delta value
-            DP_param = alpha_values[frame]
-            DP_hist = perturbed_histogram(hist_estimator, alpha=DP_param, n=n)
+            DP_param = epsilon_values[frame]
+            DP_hist = perturbed_histogram(hist_estimator, epsilon=DP_param, n=n)
             private_synthetic_data = generate_data_from_hist(
-                DP_hist, m, rescaling_factors, shuffle=True
+                DP_hist, k, rescaling_factors, shuffle=True
             )
 
         # Plot histograms
@@ -259,7 +259,7 @@ def smoothing_animation(args_dict, privacy):
         )
     if privacy == "perturbed":
         animation = FuncAnimation(
-            fig, update, frames=len(alpha_values), interval=50, repeat=False
+            fig, update, frames=len(epsilon_values), interval=50, repeat=False
         )
     # Display the animation
     return HTML(animation.to_jshtml())
@@ -272,7 +272,7 @@ args_dict = {
     "d": 1,
     "n": 100000,
     "delta_values": np.linspace(0, 1, 100),
-    "alpha_values": np.linspace(0.01, 0.2, 100),
+    "epsilon_values": np.linspace(0.01, 0.2, 100),
 }
 smoothing_animation(args_dict, privacy="perturbed")
 
