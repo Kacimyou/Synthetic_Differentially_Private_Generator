@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from utils import scale
 
 
-def histogram_estimator(X, h=0.1, adaptative=True):
+def histogram_estimator(X, h=0.1, adaptative=True, method=None):
     """
     Computes the normalized histogram estimator for multidimensional data with a specified number of bins per axis.
 
@@ -10,20 +11,20 @@ def histogram_estimator(X, h=0.1, adaptative=True):
     - X: numpy array, shape (n, d), where n is the number of data points and d is the dimensionality.
     - h: float, binwidth, where 0 < h < 1. If None, adaptative binwidth will be used.
     - adaptive: bool, whether to use adaptive binwidth or not.
+    - method: string or None, determine the binwidth of the histogram.
 
     Returns:
     - hist: numpy array, the normalized histogram estimator values.
+    - rescaling_factors: numpy array, rescaling factors to retrieve scale of the initial data
 
     """
 
     # Calculate the dimensions of the data
     n, d = X.shape
 
-    # Calculate min and max along each axis
-    min_values = np.min(X, axis=0)
-    max_values = np.max(X, axis=0)
-    rescaling_factors = np.vstack((min_values, max_values))
+    X_scaled, rescaling_factors = scale(X)
 
+    # TODO No need to scale when already in 0,1
     """if np.min(X, axis=0) < 0 or np.max(X, axis=0) > 1:
         # Scale the data to [0, 1] range
         X_scaled = (X - np.min(X, axis=0)) / (np.max(X, axis=0) - np.min(X, axis=0))
@@ -33,18 +34,24 @@ def histogram_estimator(X, h=0.1, adaptative=True):
         X_scaled = X
     """
 
-    X_scaled = (X - rescaling_factors[0]) / (
-        rescaling_factors[1] - rescaling_factors[0]
-    )
-
-    if adaptative == True:
+    if adaptative == True or method == None:
         # Calculate the binwidth based on the given parameters
+        h = n ** (-1 / (2 + d))
+
+    elif method == "smooth_L2":
+        h = n ** (-1 / (2 * d + 3))
+
+    elif method == "smooth_KS":
+        h = n ** (-1 / (d + 6))
+
+    elif method == "perturbated":
         h = n ** (-1 / (2 + d))
 
     assert h < 1 and h > 0, "Error: h must be between 0 and 1"
 
     # Check if 1/h is an integer, and convert if necessary
     h_inverse = 1 / h
+
     if not h_inverse.is_integer():
         m_per_axis = int(np.ceil(h_inverse))
         print(
