@@ -346,20 +346,19 @@ def generate_super_regular_noise_data(X, k, epsilon, adaptative=True, shuffle=Tr
 
 # %%
 
-n = 5000
+n = 1000
 d = 1
 
 mean = [0, 1]
-covariance_matrix = [[0.1, 0.4], [0.4, 1]]
+covariance_matrix = [[1, 0.9], [0.9, 1]]
 
 # Generate random sample
 X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
-hist, rescale = private_measure_via_random_walk(
-    X, epsilon=0.4, display=True, adaptative=True
-)
 # %%
-hist_test, rescale_test = histogram_estimator(X)
+private_data = generate_super_regular_noise_data(X, n, 1)
+
+
+plt.scatter(X[:, 0], X[:, 1], alpha=0.5)
+plt.scatter(private_data[:, 0], private_data[:, 1], alpha=0.5)
 
 # %%
-private_data_2 = generate_data_from_hist(hist, 1000, rescale)
-plt.scatter(private_data_2[:, 0], private_data_2[:, 1])
