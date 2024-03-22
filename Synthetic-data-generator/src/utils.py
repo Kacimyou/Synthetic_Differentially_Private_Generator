@@ -21,6 +21,23 @@ def generate_grid_points(m, d):
     return points
 
 
+def sample_from_grid(m, d, k):
+    """
+    Generate k independent samples from the grid points.
+
+    Parameters:
+        m (int): Number of points in each dimension.
+        d (int): Dimensionality of the space.
+        k (int): Number of samples to generate.
+
+    Returns:
+        numpy.ndarray: Array of sampled points with shape (k, d).
+    """
+    grid_points = generate_grid_points(m, d)
+    indices = np.random.choice(len(grid_points), k, replace=True)
+    return grid_points[indices]
+
+
 def get_histogram_indices(m, d):
     """
     Generate all indices of a d multidimensional histogram.

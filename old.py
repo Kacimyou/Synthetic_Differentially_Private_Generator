@@ -410,3 +410,40 @@ def super_regular_random_walk(laplace_noise, n, i):
     psi_bar = psi_bar.flatten()
 
     return np.dot(laplace_noise, psi_bar)
+
+
+# %%
+# Example usage with 1 test function (useless):
+true_data = np.random.normal(loc=0, scale=1, size=1000)  # Example true data
+test_functions = [lambda x: x]  # Example test functions
+reduced_space = np.linspace(-1, 1, 20)  # Example reduced space
+sigma = 0.001  # Example noise parameter
+k = 100  # Example number of synthetic data points
+synthetic_data = private_synthetic_data(
+    true_data, test_functions, reduced_space, sigma, k
+)
+
+
+plt.hist(synthetic_data)
+
+# %%
+m = 4
+d = 2
+
+print(get_histogram_indices(m, d))
+for i in range(m**d):
+    print(generate_bin_check_functions(m, d)[i](point))
+# %%
+# Example 2D histogram parameters
+num_bins = 10
+bin_width = 0.1
+
+# Index of the bin to check (bin 0 in this case)
+bin_index = (0, 0)
+
+# Point to test
+point = np.array([0.52, 0.05])  # Point lies within the bin 0
+
+# Check if the point falls into the bin 0
+result = is_in_bin(point, bin_index, bin_width)
+result
