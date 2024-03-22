@@ -80,7 +80,7 @@ def fit_linear_stat(X, test_functions, reduced_space, noise):
     reduced_space_stats = np.array(
         [[f(z) for z in reduced_space] for f in test_functions]
     )
-    print("true_stat\n", true_stats)
+    # print("true_stat\n", true_stats)
 
     def objective(h):
         linear_stats = np.dot(reduced_space_stats, h)
@@ -94,6 +94,7 @@ def fit_linear_stat(X, test_functions, reduced_space, noise):
     constraints = [{"type": "eq", "fun": constraint}]
 
     result = minimize(objective, initial_guess, bounds=bounds, constraints=constraints)
+    print(result.success)
     return result.x, rescaling_factors
 
 
@@ -134,8 +135,18 @@ def sample_from_linear_stat_density(
     return np.array(synthetic_data)
 
 
+def get_sigma_from_epsilon(epsilon, n, F, gamma=0.025):
+
+    delta = 2 * F * np.log(F / gamma) / (n * epsilon)
+
+    sigma = delta / np.log(F / gamma)
+
+    print("sigma=", sigma, "delta", delta)
+    return sigma
+
+
 def generate_linear_stat_fit_data(
-    X, test_functions, reduced_space, sigma, k, shuffle=True
+    X, test_functions, reduced_space, epsilon, k, shuffle=True
 ):
     """
     Generate private synthetic data points using linear statistical fitting.
@@ -144,13 +155,16 @@ def generate_linear_stat_fit_data(
         X (array_like): True data points.
         test_functions (list of callable): List of functions to compute statistics.
         reduced_space (array_like): Reduced space from which to sample data points.
-        sigma (float): Standard deviation of the noise.
+        epsilon (float): privacy budget.
         k (int): Number of synthetic data points to generate.
 
     Returns:
         numpy.ndarray: Synthetic data points sampled from the reduced space.
     """
     n, d = X.shape
+
+    F = len(test_functions)
+    sigma = get_sigma_from_epsilon(epsilon=epsilon, n=n, F=F)
 
     noise = np.random.laplace(scale=sigma, size=len(test_functions))
     linear_stat_density, rescaling_factors = fit_linear_stat(
@@ -165,14 +179,17 @@ def generate_linear_stat_fit_data(
     return synthetic_data
 
 
-def generate_auto_linear_stat_fit_data(X, sigma, k, method="classic", shuffle=True):
+def generate_auto_linear_stat_fit_data(
+    X, epsilon, k, method="classic", shuffle=True, gamma=0.025
+):
     """
     Generate private synthetic data points using linear statistical fitting.
 
     Parameters:
         X (array_like): True data points.
-        sigma (float): Standard deviation of the noise.
+        epsilon (float): privacy budget.
         k (int): Number of synthetic data points to generate.
+        method (string): indicate the method automatically generate test_functions and reduced space
         shuffle (bool): Whether to shuffle the reduced space.
 
     Returns:
@@ -184,7 +201,7 @@ def generate_auto_linear_stat_fit_data(X, sigma, k, method="classic", shuffle=Tr
     m = int(
         np.ceil(n ** (1 / (2 + d)))
     )  # m is calculated with the formula of histogram estimation
-    print("m=", m)
+    # print("m=", m)
     if method == "classic":
 
         # Generate test functions
@@ -202,6 +219,9 @@ def generate_auto_linear_stat_fit_data(X, sigma, k, method="classic", shuffle=Tr
         # Generate reduced space
         reduced_space = generate_grid_points(m, d)
         # print("reduced_space", reduced_space)
+
+    F = len(test_functions)
+    sigma = get_sigma_from_epsilon(epsilon=epsilon, n=n, F=F, gamma=gamma)
 
     # Generate noise
     noise = np.random.laplace(scale=sigma, size=len(test_functions))
@@ -221,10 +241,10 @@ def generate_auto_linear_stat_fit_data(X, sigma, k, method="classic", shuffle=Tr
 
 # %%
 # Example usage with multiple test functions, what we do in practice:
-n = 10000
+n = 5000
 d = 2
-sigma = 0.01  # Example noise parameter
-k = 1000  # Example number of synthetic data points
+epsilon = 0.1
+k = 3000  # Example number of synthetic data points
 
 mean = [0, 1]
 covariance_matrix = [[1, 0.8], [0.8, 1]]
@@ -233,9 +253,8 @@ covariance_matrix = [[1, 0.8], [0.8, 1]]
 X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
 
 
-synthetic_data = generate_auto_linear_stat_fit_data(X, sigma, k, method="grid_noid")
+synthetic_data = generate_auto_linear_stat_fit_data(X, epsilon, k, method="grid_noid")
 
-# %%
 plt.scatter(scale(X[:, 0])[0], scale(X[:, 1])[0], alpha=0.5)
 plt.scatter(synthetic_data[:, 0], synthetic_data[:, 1], alpha=0.5)
 
@@ -244,29 +263,4 @@ plt.scatter(synthetic_data[:, 0], synthetic_data[:, 1], alpha=0.5)
 plt.scatter(np.linspace(0, 1, 1000), np.sort(synthetic_data[:, 0]))
 
 # %%
-
-# %%
-
-test = sample_from_grid(10, 2, 150)
-
-plt.scatter(test[:, 0], test[:, 1])
-
-plt.scatter(
-    np.linspace(0, 9, 10),
-    [0.0013, 0.0111, 0.0564, 0.1612, 0.2679, 0.2804, 0.1527, 0.0578, 0.0103, 0.0009],
-)
-plt.scatter(
-    np.linspace(0, 9, 10),
-    [
-        4.29921768e-17,
-        2.00271860e-02,
-        4.95571391e-02,
-        1.50836702e-01,
-        2.73678741e-01,
-        2.77428706e-01,
-        1.62368941e-01,
-        6.61025858e-02,
-        2.96088877e-17,
-        7.81122872e-18,
-    ],
-)
+get_sigma_from_epsilon(2, 10000, 100)
