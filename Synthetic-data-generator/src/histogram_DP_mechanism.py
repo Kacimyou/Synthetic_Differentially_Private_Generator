@@ -73,7 +73,7 @@ def generate_smooth_data(
 
     if norm == "L2":
 
-        m = int(np.ceil(n ** (d / (2 * d + 3))))
+        m = int(np.ceil(n ** (1 / (2 * d + 3)))) ** d
         print(m)
         if automatic:
             k = int(n ** ((d + 2) / (2 * d + 3)))  # k must be int
@@ -96,7 +96,7 @@ def generate_smooth_data(
                 "Warning automatic = False, the parameter given may not guarantee privacy"
             )
             print(
-                "k*log((1-delta)/n*delta + 1) = ",
+                "k*log((1-delta)* m/n*delta + 1) = ",
                 k * np.log((1 - delta) * m / (n * delta) + 1),
                 "epsilon =",
                 epsilon,
@@ -107,7 +107,7 @@ def generate_smooth_data(
             print(
                 epsilon,
                 "-DP achieved:",
-                k * np.log((1 - delta) * m / (n * delta) + 1) <= epsilon,
+                np.isclose(k * np.log((1 - delta) * m / (n * delta) + 1), epsilon),
             )
 
         # Perform histogram estimation
@@ -140,7 +140,7 @@ def generate_smooth_data(
                 "Warning overwrite = False, the parameter given may not guarantee privacy "
             )
             print(
-                "k*log((1-delta)/n*delta + 1) = ",
+                "k*log((1-delta)* m/n*delta + 1) = ",
                 k * np.log((1 - delta) * m / (n * delta) + 1),
                 "epsilon =",
                 epsilon,
@@ -196,10 +196,10 @@ covariance_matrix = [[1, 0.8], [0.8, 1]]
 X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
 
 perturbated, hist = generate_smooth_data(
-    X, k=500, epsilon=0.2, adaptative=True, norm="L2", automatic=True
+    X, k=5000, epsilon=25, adaptative=True, norm="L2", automatic=False
 )
 
-perturbated, hist = generate_perturbated_data(X, k=5000, epsilon=0.3, adaptative=True)
+# perturbated, hist = generate_perturbated_data(X, k=500, epsilon=0.4, adaptative=True)
 
 plt.scatter(X[:, 0], X[:, 1], alpha=0.5)
 plt.scatter(perturbated[:, 0], perturbated[:, 1], alpha=0.5)
