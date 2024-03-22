@@ -5,24 +5,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from histogram_estimator import histogram_estimator
 from tqdm import tqdm
-
-
-def generate_grid_points(m, d):
-    """
-    Generate 1/m-net of [0,1]**d.
-
-    Parameters:
-        m (int): Number of points in each dimension.
-        d (int): Dimensionality of the space.
-
-    Returns:
-        numpy.ndarray: Array of grid points with shape (m^d, d).
-    """
-    # Generate grid points for each dimension
-    grid_points = [np.linspace(0, 1, m) for _ in range(d)]
-    # Take the Cartesian product of grid points
-    points = np.array(list(itertools.product(*grid_points)))
-    return points
+from utils import generate_grid_points
 
 
 def is_neighbour(p1, p2, neighbour_distance, norm=2):
