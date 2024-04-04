@@ -258,9 +258,6 @@ synthetic_data = generate_auto_linear_stat_fit_data(X, epsilon, k, method="grid_
 plt.scatter(scale(X[:, 0])[0], scale(X[:, 1])[0], alpha=0.5)
 plt.scatter(synthetic_data[:, 0], synthetic_data[:, 1], alpha=0.5)
 
-# %%
-
-plt.scatter(np.linspace(0, 1, 1000), np.sort(synthetic_data[:, 0]))
 
 # %%
 get_sigma_from_epsilon(2, 10000, 100)
