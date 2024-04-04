@@ -163,7 +163,7 @@ def generate_smooth_data(
         DP_hist_smoothed, k=k, rescaling_factor=rescaling_factors, shuffle=shuffle
     )
     print("delta used=", delta)
-    return smoothed_synthetic_data, hist_estimator
+    return smoothed_synthetic_data
 
 
 def generate_perturbated_data(X, k, epsilon, adaptative=True, shuffle=True):
@@ -180,7 +180,7 @@ def generate_perturbated_data(X, k, epsilon, adaptative=True, shuffle=True):
         DP_hist_perturbed, k=k, rescaling_factor=rescaling_factors, shuffle=shuffle
     )
 
-    return perturbed_synthetic_data, hist_estimator
+    return perturbed_synthetic_data
 
 
 # %%
@@ -195,7 +195,7 @@ covariance_matrix = [[1, 0.8], [0.8, 1]]
 # Generate random sample
 X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
 
-perturbated, hist = generate_smooth_data(
+perturbated = generate_smooth_data(
     X, k=5000, epsilon=25, adaptative=True, norm="L2", automatic=False
 )
 
