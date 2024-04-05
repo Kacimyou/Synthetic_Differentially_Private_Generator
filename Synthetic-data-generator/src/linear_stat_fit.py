@@ -128,7 +128,6 @@ def sample_from_linear_stat_density(
         noise = np.random.uniform(-1, 1, size=(len(synthetic_data), d)) / len(
             linear_stat_density
         ) ** (1 / d)
-        print(len(linear_stat_density))
 
         synthetic_data += noise
 
@@ -180,7 +179,7 @@ def generate_linear_stat_fit_data(
 
 
 def generate_auto_linear_stat_fit_data(
-    X, epsilon, k, method="classic", shuffle=True, gamma=0.025
+    X, k, epsilon, method="classic", shuffle=True, gamma=0.025
 ):
     """
     Generate private synthetic data points using linear statistical fitting.
@@ -196,7 +195,7 @@ def generate_auto_linear_stat_fit_data(
         numpy.ndarray: Synthetic data points sampled from the reduced space.
     """
     n, d = X.shape
-    assert method in ["classic", "grid_noid"], "Error: method not defined"
+    assert method in ["classic", "grid_noid", "linear_reg"], "Error: method not defined"
 
     m = int(
         np.ceil(n ** (1 / (2 + d)))
@@ -208,7 +207,7 @@ def generate_auto_linear_stat_fit_data(
         test_functions = generate_bin_check_functions(m, d)
 
         # Generate reduced space
-        reduced_space = sample_from_grid(m, d, 3 * m)
+        reduced_space = sample_from_grid(m, d, m**d)
         # print("reduced_space", reduced_space)
 
     if method == "grid_noid":
@@ -220,6 +219,18 @@ def generate_auto_linear_stat_fit_data(
         reduced_space = generate_grid_points(m, d)
         # print("reduced_space", reduced_space)
 
+    if method == "linear_reg":
+
+        # Generate test functions
+        test_functions = [
+            lambda x: x[0] * x[1],
+            lambda x: x[0],
+            lambda x: x[0] ** 2,
+            lambda x: x[1],
+        ]
+
+        # Generate reduced space
+        reduced_space = generate_grid_points(m, d)
     F = len(test_functions)
     sigma = get_sigma_from_epsilon(epsilon=epsilon, n=n, F=F, gamma=gamma)
 
@@ -241,23 +252,33 @@ def generate_auto_linear_stat_fit_data(
 
 # %%
 # Example usage with multiple test functions, what we do in practice:
-n = 5000
-d = 2
-epsilon = 0.1
-k = 3000  # Example number of synthetic data points
+n = 1000
+d = 4
+epsilon = 2
+k = 1000  # Example number of synthetic data points
 
-mean = [0, 1]
-covariance_matrix = [[1, 0.8], [0.8, 1]]
+# mean = [0, 1]
+# covariance_matrix = [[1, 0.8], [0.8, 1]]
+
+mean = [0, 1, 0, 0]  # Mean for each dimension
+covariance_matrix = [
+    [1, 0.8, 0, 0],  # Variance and covariance for first dimension
+    [0.8, 1, 0, 0],  # Variance and covariance for second dimension
+    [0, 0, 1, 0],  # Variance and covariance for third dimension (no correlation)
+    [0, 0, 0, 1],  # Variance and covariance for fourth dimension (no correlation)
+]
 
 # Generate random sample
 X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
 
 
-synthetic_data = generate_auto_linear_stat_fit_data(X, epsilon, k, method="grid_noid")
+synthetic_data = generate_auto_linear_stat_fit_data(X, k, epsilon, method="classic")
 
 plt.scatter(scale(X[:, 0])[0], scale(X[:, 1])[0], alpha=0.5)
 plt.scatter(synthetic_data[:, 0], synthetic_data[:, 1], alpha=0.5)
 
 
 # %%
-get_sigma_from_epsilon(2, 10000, 100)
+
+unique_arrays = set(map(tuple, sample_from_grid(10, 2, 300)))
+num_unique_arrays = len(unique_arrays)
