@@ -225,14 +225,17 @@ def generate_auto_linear_stat_fit_data(
         test_functions = [
             lambda x: x[0] * x[1],
             lambda x: x[0],
-            lambda x: x[0] ** 2,
             lambda x: x[1],
+            lambda x: x[0] ** 2,
+            lambda x: x[1] ** 2,
         ]
 
         # Generate reduced space
         reduced_space = generate_grid_points(m, d)
+
     F = len(test_functions)
     sigma = get_sigma_from_epsilon(epsilon=epsilon, n=n, F=F, gamma=gamma)
+    sigma = 0
 
     # Generate noise
     noise = np.random.laplace(scale=sigma, size=len(test_functions))
@@ -252,33 +255,24 @@ def generate_auto_linear_stat_fit_data(
 
 # %%
 # Example usage with multiple test functions, what we do in practice:
-n = 1000
+n = 10000
 d = 4
 epsilon = 2
 k = 1000  # Example number of synthetic data points
 
-# mean = [0, 1]
-# covariance_matrix = [[1, 0.8], [0.8, 1]]
+mean = [0, 1]
+covariance_matrix = [[1, 0.8], [0.8, 1]]
 
-mean = [0, 1, 0, 0]  # Mean for each dimension
-covariance_matrix = [
-    [1, 0.8, 0, 0],  # Variance and covariance for first dimension
-    [0.8, 1, 0, 0],  # Variance and covariance for second dimension
-    [0, 0, 1, 0],  # Variance and covariance for third dimension (no correlation)
-    [0, 0, 0, 1],  # Variance and covariance for fourth dimension (no correlation)
-]
 
 # Generate random sample
 X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
 
 
-synthetic_data = generate_auto_linear_stat_fit_data(X, k, epsilon, method="classic")
+synthetic_data = generate_auto_linear_stat_fit_data(X, k, epsilon, method="linear_reg")
 
+# plt.scatter(X[:, 0], X[:,1])
 plt.scatter(scale(X[:, 0])[0], scale(X[:, 1])[0], alpha=0.5)
 plt.scatter(synthetic_data[:, 0], synthetic_data[:, 1], alpha=0.5)
 
 
 # %%
-
-unique_arrays = set(map(tuple, sample_from_grid(10, 2, 300)))
-num_unique_arrays = len(unique_arrays)
