@@ -15,7 +15,7 @@ def generate_grid_points(m, d):
         numpy.ndarray: Array of grid points with shape (m^d, d).
     """
     # Generate grid points for each dimension
-    grid_points = [np.linspace(0, 1, m) for _ in range(d)]
+    grid_points = [np.linspace(1 / (2 * m), 1 - 1 / (2 * m), m) for _ in range(d)]
     # Take the Cartesian product of grid points
     points = np.array(list(itertools.product(*grid_points)))
     return points
