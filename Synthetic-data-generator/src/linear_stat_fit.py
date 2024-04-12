@@ -99,7 +99,7 @@ def fit_linear_stat(X, test_functions, reduced_space, noise):
 
 
 def sample_from_linear_stat_density(
-    linear_stat_density, reduced_space, k, d, rescaling_factor, shuffle=True
+    linear_stat_density, reduced_space, k, d, m, rescaling_factor, shuffle=True
 ):
     """
     Generate synthetic data points by bootstrapping from the reduced space.
@@ -172,14 +172,20 @@ def generate_linear_stat_fit_data(
 
     print("result of linear_stat_fit \n", np.round(linear_stat_density, decimals=4))
     synthetic_data = sample_from_linear_stat_density(
-        linear_stat_density, reduced_space, k, d, rescaling_factors, shuffle=shuffle
+        linear_stat_density,
+        reduced_space,
+        k,
+        d,
+        len(linear_stat_density),
+        rescaling_factors,
+        shuffle=shuffle,
     )
     print(rescaling_factors)
     return synthetic_data
 
 
 def generate_auto_linear_stat_fit_data(
-    X, k, epsilon, method="classic", shuffle=True, gamma=0.025
+    X, k, epsilon, method="classic", shuffle=True, gamma=0.025, add=False
 ):
     """
     Generate private synthetic data points using linear statistical fitting.
@@ -215,11 +221,23 @@ def generate_auto_linear_stat_fit_data(
         # Generate test functions
         test_functions = generate_bin_check_functions(m, d)
 
+        if add:
+
+            test_functions += [
+                lambda x: x[0] * x[1],
+                lambda x: x[0],
+                lambda x: x[1],
+                lambda x: x[0] ** 2,
+                lambda x: x[1] ** 2,
+            ]
+
         # Generate reduced space
         reduced_space = generate_grid_points(m, d)
         # print("reduced_space", reduced_space)
 
     if method == "linear_reg":
+
+        m *= 2
 
         # Generate test functions
         test_functions = [
@@ -231,11 +249,11 @@ def generate_auto_linear_stat_fit_data(
         ]
 
         # Generate reduced space
-        reduced_space = generate_grid_points(m, d)
+
+        reduced_space = sample_from_grid(m, d, m**d)
 
     F = len(test_functions)
     sigma = get_sigma_from_epsilon(epsilon=epsilon, n=n, F=F, gamma=gamma)
-    sigma = 0
 
     # Generate noise
     noise = np.random.laplace(scale=sigma, size=len(test_functions))
@@ -247,18 +265,18 @@ def generate_auto_linear_stat_fit_data(
 
     # Sample synthetic data points based on linear statistical model
     synthetic_data = sample_from_linear_stat_density(
-        linear_stat_density, reduced_space, k, d, rescaling_factors, shuffle=shuffle
+        linear_stat_density, reduced_space, k, d, m, rescaling_factors, shuffle=shuffle
     )
 
     return synthetic_data
 
 
 # %%
-# Example usage with multiple test functions, what we do in practice:
-n = 10000
+
+n = 2000
 d = 4
 epsilon = 2
-k = 1000  # Example number of synthetic data points
+k = 2000  # Example number of synthetic data points
 
 mean = [0, 1]
 covariance_matrix = [[1, 0.8], [0.8, 1]]
@@ -268,7 +286,9 @@ covariance_matrix = [[1, 0.8], [0.8, 1]]
 X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
 
 
-synthetic_data = generate_auto_linear_stat_fit_data(X, k, epsilon, method="linear_reg")
+synthetic_data = generate_auto_linear_stat_fit_data(
+    X, k, epsilon, method="linear_reg", add=False, shuffle=True
+)
 
 # plt.scatter(X[:, 0], X[:,1])
 plt.scatter(scale(X[:, 0])[0], scale(X[:, 1])[0], alpha=0.5)
@@ -276,3 +296,17 @@ plt.scatter(synthetic_data[:, 0], synthetic_data[:, 1], alpha=0.5)
 
 
 # %%
+scale_x = scale(X)[0]
+
+print(
+    np.corrcoef(scale_x[:, 0], scale_x[:, 1]),
+    np.corrcoef(synthetic_data[:, 0], synthetic_data[:, 1]),
+    np.mean(scale_x[:, 0]),
+    np.mean(scale_x[:, 1]),
+    np.mean(synthetic_data[:, 0]),
+    np.mean(synthetic_data[:, 1]),
+    np.std(scale_x[:, 0]),
+    np.std(scale_x[:, 1]),
+    np.std(synthetic_data[:, 0]),
+    np.std(synthetic_data[:, 1]),
+)
