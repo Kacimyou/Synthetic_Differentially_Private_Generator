@@ -11,20 +11,24 @@ import scipy.stats
 # %%
 
 
-def generate_data(X, size, epsilon, method):
+def generate_data(X, size, epsilon, method, shuffle=True):
     if method == "perturbated":
-        return generate_perturbated_data(X, size, epsilon)
+        return generate_perturbated_data(X, size, epsilon, shuffle=shuffle)
     elif method == "smooth":
-        return generate_smooth_data(X, size, epsilon)
+        return generate_smooth_data(X, size, epsilon, shuffle=shuffle)
     elif method == "linear_stat_fit":
-        return generate_auto_linear_stat_fit_data(X, size, epsilon, method="grid_noid")
+        return generate_auto_linear_stat_fit_data(
+            X, size, epsilon, method="grid_noid", shuffle=shuffle
+        )
     elif method == "super_regular_noise":
-        return generate_super_regular_noise_data(X, size, epsilon)
+        return generate_super_regular_noise_data(X, size, epsilon, shuffle=shuffle)
     else:
         raise ValueError("Unknown method")
 
 
-def run_experiment(N, epsilon, methods, num_trials=10):
+def run_experiment(
+    N, epsilon, methods, beta=[1], num_trials=10, d=1, noise_std=0.2, shuffle=True
+):
 
     sizes = np.logspace(np.log10(100), np.log10(N), num=10, dtype=int)
 
@@ -34,13 +38,25 @@ def run_experiment(N, epsilon, methods, num_trials=10):
         for size in sizes:
             r2_scores = []
             for _ in range(num_trials):
-                data = np.random.multivariate_normal(
-                    mean=[0, 1], cov=[[1, 0.9], [0.9, 1]], size=size
+
+                assert (
+                    len(beta) == d,
+                    "Error: size of beta do not match number of features",
                 )
-                private_data = generate_data(data, size, epsilon, method)
+                X = np.random.randn(size, d)
+                y = (
+                    np.dot(X, beta).reshape(size, 1)
+                    + np.random.randn(size, 1) * noise_std
+                )
+
+                data = np.concatenate((X, y), axis=1)
+                print(data.shape)
+                private_data = generate_data(
+                    data, size, epsilon, method, shuffle=shuffle
+                )
 
                 x = private_data[:, 0].reshape(-1, 1)
-                y = private_data[:, 1]
+                y = private_data[:, -1]
 
                 # Perform linear regression
                 model = LinearRegression()
@@ -82,6 +98,6 @@ def run_experiment(N, epsilon, methods, num_trials=10):
 # Example usage:
 # methods = ["super_regular_noise","perturbated"]
 methods = ["perturbated"]
-run_experiment(1000, 0.2, methods, num_trials=100)
+run_experiment(1000, 2, methods, num_trials=100, d=1, beta=[100], shuffle=False)
 
 # %%
