@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from utils import scale
 
 
-def histogram_estimator(X, h=0.1, adaptative=True, method=None):
+def histogram_estimator(X, h=0.1, adaptative=True, method=None, verbose=0):
     """
     Computes the normalized histogram estimator for multidimensional data with a specified number of bins per axis.
 
@@ -47,16 +47,17 @@ def histogram_estimator(X, h=0.1, adaptative=True, method=None):
     elif method == "perturbated":
         h = n ** (-1 / (2 + d))
 
-    assert h < 1 and h > 0, "Error: h must be between 0 and 1"
+    assert 0 < h < 1, "Error: h must be between 0 and 1"
 
     # Check if 1/h is an integer, and convert if necessary
     h_inverse = 1 / h
 
     if not h_inverse.is_integer():
         m_per_axis = int(np.ceil(h_inverse))
-        print(
-            f"Warning: 1/h is not an integer. Converting to the closest integer: {m_per_axis}"
-        )
+        if verbose == 1:
+            print(
+                f"Warning: 1/h is not an integer. Converting to the closest integer: {m_per_axis}"
+            )
     else:
         m_per_axis = int(h_inverse)
 
@@ -83,7 +84,6 @@ def histogram_estimator(X, h=0.1, adaptative=True, method=None):
 
     # Normalize the histogram estimator
     hist /= n
-    # TODO CONTINUE the implementation of privacy options
 
     # Check if the sum of elements is equal to 1
     assert np.isclose(
