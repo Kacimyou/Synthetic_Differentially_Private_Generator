@@ -332,7 +332,7 @@ def plot_mapping(points, square=False, arrow=True):
 
 
 uniform = np.random.uniform(0, 1, size=(10, 2))
-plot_mapping(points, square=False)
+# plot_mapping(points, square=False)
 
 # %%
 
