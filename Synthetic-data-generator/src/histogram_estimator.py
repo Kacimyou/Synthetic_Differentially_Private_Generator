@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import scale
+from utils import scale, rescale
 
 
 def histogram_estimator(X, h=0.1, adaptative=True, method=None, verbose=0):
@@ -93,7 +93,9 @@ def histogram_estimator(X, h=0.1, adaptative=True, method=None, verbose=0):
     return hist, rescaling_factors
 
 
-def generate_data_from_hist(hist_estimator, k, rescaling_factor=[0, 1], shuffle=True):
+def generate_data_from_hist(
+    hist_estimator, k, rescaling_factor=[0, 1], shuffle=True, rescaling=False
+):
     """
     Generates synthetic data points according to the empirical distribution represented by fbm_estimator.
 
@@ -124,25 +126,18 @@ def generate_data_from_hist(hist_estimator, k, rescaling_factor=[0, 1], shuffle=
     # Create synthetic data points based on the multi-dimensional indices
     if not (shuffle):
         # TODO : Make a function for rescaling_factor[0] + ((idx+0.5) * binwidth * (rescaling_factor[1] - rescaling_factor[0]))
-        synthetic_data = np.array(
-            [
-                rescaling_factor[0]
-                + ((idx + 0.5) * binwidth * (rescaling_factor[1] - rescaling_factor[0]))
-                for idx in multi_dim_indices
-            ]
-        )
+        synthetic_data = np.array([(idx + 0.5) * binwidth for idx in multi_dim_indices])
     if shuffle:
 
         synthetic_data = np.array(
             [
-                rescaling_factor[0]
-                + (
-                    (idx + np.random.uniform(0, 1, size=len(hist_estimator.shape)))
-                    * binwidth
-                    * (rescaling_factor[1] - rescaling_factor[0])
-                )
+                (idx + np.random.uniform(0, 1, size=len(hist_estimator.shape)))
+                * binwidth
                 for idx in multi_dim_indices
             ]
         )
+    if rescaling:
+
+        synthetic_data = rescale(synthetic_data, rescaling_factor)
 
     return synthetic_data
