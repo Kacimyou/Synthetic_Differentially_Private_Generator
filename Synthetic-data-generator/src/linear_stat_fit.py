@@ -2,7 +2,13 @@
 import numpy as np
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
-from utils import get_histogram_indices, generate_grid_points, scale, sample_from_grid
+from utils import (
+    get_histogram_indices,
+    generate_grid_points,
+    scale,
+    sample_from_grid,
+    rescale,
+)
 
 
 def is_in_bin(point, bin_index, bin_width):
@@ -98,7 +104,14 @@ def fit_linear_stat(X, test_functions, reduced_space, noise):
 
 
 def sample_from_linear_stat_density(
-    linear_stat_density, reduced_space, k, d, m, rescaling_factor, shuffle=True
+    linear_stat_density,
+    reduced_space,
+    k,
+    d,
+    m,
+    rescaling_factor,
+    shuffle=True,
+    rescaling=True,
 ):
     """
     Generate synthetic data points by bootstrapping from the reduced space.
@@ -130,6 +143,9 @@ def sample_from_linear_stat_density(
 
         synthetic_data += noise
 
+    if rescaling:
+        synthetic_data = rescale(synthetic_data, rescaling_factors=rescaling_factor)
+
     return np.array(synthetic_data)
 
 
@@ -144,7 +160,7 @@ def get_sigma_from_epsilon(epsilon, n, F, gamma=0.025):
 
 
 def generate_linear_stat_fit_data(
-    X, test_functions, reduced_space, epsilon, k, shuffle=True
+    X, test_functions, reduced_space, epsilon, k, shuffle=True, rescaling=True
 ):
     """
     Generate private synthetic data points using linear statistical fitting.
@@ -178,13 +194,20 @@ def generate_linear_stat_fit_data(
         len(linear_stat_density),
         rescaling_factors,
         shuffle=shuffle,
+        rescaling=rescaling,
     )
-    print(rescaling_factors)
     return synthetic_data
 
 
 def generate_auto_linear_stat_fit_data(
-    X, k, epsilon, method="classic", shuffle=True, gamma=0.025, add=False
+    X,
+    k,
+    epsilon,
+    method="classic",
+    shuffle=True,
+    gamma=0.025,
+    add=False,
+    rescaling=True,
 ):
     """
     Generate private synthetic data points using linear statistical fitting.
@@ -264,7 +287,14 @@ def generate_auto_linear_stat_fit_data(
 
     # Sample synthetic data points based on linear statistical model
     synthetic_data = sample_from_linear_stat_density(
-        linear_stat_density, reduced_space, k, d, m, rescaling_factors, shuffle=shuffle
+        linear_stat_density,
+        reduced_space,
+        k,
+        d,
+        m,
+        rescaling_factors,
+        shuffle=shuffle,
+        rescaling=rescaling,
     )
 
     return synthetic_data

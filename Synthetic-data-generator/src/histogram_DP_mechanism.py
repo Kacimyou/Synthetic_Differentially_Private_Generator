@@ -68,7 +68,15 @@ def perturbed_histogram(hist_estimator, epsilon, n):
 
 
 def generate_smooth_data(
-    X, k, epsilon, adaptative=True, shuffle=True, norm="L2", automatic=True, verbose=0
+    X,
+    k,
+    epsilon,
+    adaptative=True,
+    shuffle=True,
+    norm="L2",
+    automatic=True,
+    verbose=0,
+    rescaling=True,
 ):
     n, d = X.shape
 
@@ -166,13 +174,19 @@ def generate_smooth_data(
     DP_hist_smoothed = smooth_histogram(hist_estimator, delta=delta)
 
     smoothed_synthetic_data = generate_data_from_hist(
-        DP_hist_smoothed, k=k, rescaling_factor=rescaling_factors, shuffle=shuffle
+        DP_hist_smoothed,
+        k=k,
+        rescaling_factor=rescaling_factors,
+        shuffle=shuffle,
+        rescaling=rescaling,
     )
     # print("delta used=", delta)
     return smoothed_synthetic_data
 
 
-def generate_perturbated_data(X, k, epsilon, adaptative=True, shuffle=True):
+def generate_perturbated_data(
+    X, k, epsilon, adaptative=True, shuffle=True, rescaling=True
+):
 
     n, d = X.shape
 
@@ -183,7 +197,11 @@ def generate_perturbated_data(X, k, epsilon, adaptative=True, shuffle=True):
     DP_hist_perturbed = perturbed_histogram(hist_estimator, epsilon=epsilon, n=n)
 
     perturbed_synthetic_data = generate_data_from_hist(
-        DP_hist_perturbed, k=k, rescaling_factor=rescaling_factors, shuffle=shuffle
+        DP_hist_perturbed,
+        k=k,
+        rescaling_factor=rescaling_factors,
+        shuffle=shuffle,
+        rescaling=rescaling,
     )
 
     return perturbed_synthetic_data

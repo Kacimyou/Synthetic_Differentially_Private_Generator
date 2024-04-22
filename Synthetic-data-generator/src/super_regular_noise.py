@@ -331,14 +331,20 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
     return noisy_histogram, rescaling_factors
 
 
-def generate_super_regular_noise_data(X, k, epsilon, adaptative=True, shuffle=True):
+def generate_super_regular_noise_data(
+    X, k, epsilon, adaptative=True, shuffle=True, rescaling=True
+):
 
     hist, rescaling_factor = private_measure_via_random_walk(
         X, epsilon, adaptative=adaptative
     )
 
     super_regular_noise_data = generate_data_from_hist(
-        hist, k=k, rescaling_factor=rescaling_factor, shuffle=shuffle
+        hist,
+        k=k,
+        rescaling_factor=rescaling_factor,
+        shuffle=shuffle,
+        rescaling=rescaling,
     )
 
     return super_regular_noise_data
