@@ -54,7 +54,17 @@ def get_histogram_indices(m, d):
 
 
 def scale(X):
-    # Calculate min and max along each axis
+    """
+    Scales the input data `X` along each feature axis to the range [0, 1].
+
+    Parameters:
+        X (array-like): Input data of shape (n_samples, n_features).
+
+    Returns:
+        X_scaled (numpy.ndarray): Scaled data with the same shape as `X`.
+        rescaling_factors (numpy.ndarray): An array containing the minimum and maximum values
+            along each feature axis, used for rescaling. Shape is (2, n_features).
+    """
     min_values = np.min(X, axis=0)
     max_values = np.max(X, axis=0)
     rescaling_factors = np.vstack((min_values, max_values))
@@ -64,3 +74,41 @@ def scale(X):
     )
 
     return X_scaled, rescaling_factors
+
+
+def rescale(X, rescaling_factors):
+    """
+    Rescales the input data `X` based on the given rescaling factors.
+
+    Parameters:
+        X (array-like): Scaled data of shape (n_samples, n_features).
+        rescaling_factors (numpy.ndarray): An array containing the minimum and maximum values
+            along each feature axis, used for rescaling. Shape is (2, n_features).
+
+    Returns:
+        X_rescaled (numpy.ndarray): Rescaled data with the same shape as `X`.
+    """
+    min_values = rescaling_factors[0]
+    max_values = rescaling_factors[1]
+
+    X_rescaled = X * (max_values - min_values) + min_values
+
+    return X_rescaled
+
+
+# # Test
+# size = 500
+# d = 30
+# X = np.random.randn(size, d)
+# print("X",'\n',X,"\n")
+
+# # Scaling
+# X_scale, r = scale(X)
+# print("X_scale",'\n',X_scale,'\n', r, "\n")
+
+# # Rescaling
+# X_rescale = rescale(X_scale, r)
+# print("X_rescale",'\n',X_rescale)
+
+# # Check if X_rescale == X
+# print("X_rescale == X:", np.allclose(X_rescale, X))
