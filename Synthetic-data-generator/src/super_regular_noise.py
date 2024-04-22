@@ -346,19 +346,29 @@ def generate_super_regular_noise_data(X, k, epsilon, adaptative=True, shuffle=Tr
 
 # %%
 
-n = 1000
-d = 1
+# n = 1000
+# d = 1
 
-mean = [0, 1]
-covariance_matrix = [[1, 0.9], [0.9, 1]]
+# mean = [0, 1]
+# covariance_matrix = [[1, 0.9], [0.9, 1]]
 
-# Generate random sample
-X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
-# %%
-private_data = generate_super_regular_noise_data(X, n, 1)
+# # Generate random sample
+# data = np.random.multivariate_normal(mean, covariance_matrix, size=n)
+# #%%
+
+# beta = np.array([100])
+# d=1
+# n = 100
+# noise_std = 0.3
+# X = np.random.randn(n, d)
+# y = np.dot(X,beta).reshape(n,1) + np.random.randn(n, 1) * noise_std
 
 
-plt.scatter(X[:, 0], X[:, 1], alpha=0.5)
-plt.scatter(private_data[:, 0], private_data[:, 1], alpha=0.5)
+# data = np.concatenate((X, y), axis=1)
+# data
+# # %%
+# private_data = generate_super_regular_noise_data(data, n, 10, shuffle = False)
 
-# %%
+
+# plt.scatter(data[:, 0], data[:, 1], alpha=0.5)
+# plt.scatter(private_data[:, 0], private_data[:, 1], alpha=0.5)

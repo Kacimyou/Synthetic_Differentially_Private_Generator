@@ -94,7 +94,6 @@ def fit_linear_stat(X, test_functions, reduced_space, noise):
     constraints = [{"type": "eq", "fun": constraint}]
 
     result = minimize(objective, initial_guess, bounds=bounds, constraints=constraints)
-    print(result.success)
     return result.x, rescaling_factors
 
 
@@ -140,7 +139,7 @@ def get_sigma_from_epsilon(epsilon, n, F, gamma=0.025):
 
     sigma = delta / np.log(F / gamma)
 
-    print("sigma=", sigma, "delta", delta)
+    # print("sigma=", sigma, "delta", delta)
     return sigma
 
 
@@ -273,40 +272,40 @@ def generate_auto_linear_stat_fit_data(
 
 # %%
 
-n = 2000
-d = 4
-epsilon = 2
-k = 2000  # Example number of synthetic data points
+# n = 2000
+# d = 4
+# epsilon = 2
+# k = 2000  # Example number of synthetic data points
 
-mean = [0, 1]
-covariance_matrix = [[1, 0.8], [0.8, 1]]
-
-
-# Generate random sample
-X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
+# mean = [0, 1]
+# covariance_matrix = [[1, 0.8], [0.8, 1]]
 
 
-synthetic_data = generate_auto_linear_stat_fit_data(
-    X, k, epsilon, method="linear_reg", add=False, shuffle=True
-)
-
-# plt.scatter(X[:, 0], X[:,1])
-plt.scatter(scale(X[:, 0])[0], scale(X[:, 1])[0], alpha=0.5)
-plt.scatter(synthetic_data[:, 0], synthetic_data[:, 1], alpha=0.5)
+# # Generate random sample
+# X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
 
 
-# %%
-scale_x = scale(X)[0]
+# synthetic_data = generate_auto_linear_stat_fit_data(
+#     X, k, epsilon, method="linear_reg", add=False, shuffle=True
+# )
 
-print(
-    np.corrcoef(scale_x[:, 0], scale_x[:, 1]),
-    np.corrcoef(synthetic_data[:, 0], synthetic_data[:, 1]),
-    np.mean(scale_x[:, 0]),
-    np.mean(scale_x[:, 1]),
-    np.mean(synthetic_data[:, 0]),
-    np.mean(synthetic_data[:, 1]),
-    np.std(scale_x[:, 0]),
-    np.std(scale_x[:, 1]),
-    np.std(synthetic_data[:, 0]),
-    np.std(synthetic_data[:, 1]),
-)
+# # plt.scatter(X[:, 0], X[:,1])
+# plt.scatter(scale(X[:, 0])[0], scale(X[:, 1])[0], alpha=0.5)
+# plt.scatter(synthetic_data[:, 0], synthetic_data[:, 1], alpha=0.5)
+
+
+# # %%
+# scale_x = scale(X)[0]
+
+# print(
+#     np.corrcoef(scale_x[:, 0], scale_x[:, 1]),
+#     np.corrcoef(synthetic_data[:, 0], synthetic_data[:, 1]),
+#     np.mean(scale_x[:, 0]),
+#     np.mean(scale_x[:, 1]),
+#     np.mean(synthetic_data[:, 0]),
+#     np.mean(synthetic_data[:, 1]),
+#     np.std(scale_x[:, 0]),
+#     np.std(scale_x[:, 1]),
+#     np.std(synthetic_data[:, 0]),
+#     np.std(synthetic_data[:, 1]),
+# )
