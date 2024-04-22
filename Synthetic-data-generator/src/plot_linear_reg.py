@@ -1,14 +1,17 @@
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
-from histogram_DP_mechanism import generate_smooth_data, generate_perturbated_data
+from histogram_DP_mechanism import (
+    generate_smooth_data,
+    generate_perturbated_data,
+)
 from super_regular_noise import generate_super_regular_noise_data
 from linear_stat_fit import generate_auto_linear_stat_fit_data
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
+from sklearn.datasets import make_classification
 import scipy.stats
 from tqdm import tqdm
-from utils import scale
 
 
 def generate_data(X, size, epsilon, method, shuffle=True, rescaling=True):
@@ -198,47 +201,97 @@ run_experiment_beta(1000, 2, methods, num_trials=10, d=1, beta=[10], shuffle=Fal
 
 
 # %%
+
+
+def plot_linear_reg_private(size, d, noise_std, beta, epsilon):
+    X = np.random.randn(size, d)
+    y = np.dot(X, beta).reshape(size, 1) + np.random.randn(size, 1) * noise_std
+    data = np.concatenate((X, y), axis=1)
+
+    # Assuming you have implemented the generate_smooth_data function correctly
+    private_data = generate_data(
+        data, size, epsilon, method="super_regular_noise", shuffle=True, rescaling=True
+    )
+    x_private = private_data[:, 0].reshape(-1, 1)
+    y_private = private_data[:, -1]
+
+    model = LinearRegression()
+    model.fit(x_private, y_private)
+    # Predictions
+    y_pred = model.predict(x_private)
+
+    # Fit another linear regression model to original data X and y
+    original_model = LinearRegression()
+    original_model.fit(X, y)
+    y_pred_original = original_model.predict(X)
+
+    # Plot original and private data
+    plt.scatter(X, y, color="lightblue", alpha=0.5, label="Original Data")
+    plt.scatter(
+        private_data[:, 0],
+        private_data[:, 1],
+        color="pink",
+        alpha=0.7,
+        label="Private Data",
+    )
+
+    # Plot the estimated line from linear regression on private data
+    plt.plot(
+        x_private,
+        y_pred,
+        color="red",
+        linestyle="dotted",
+        linewidth=3,
+        label=f'Private Regression beta_hat ={model.coef_}"',
+    )
+
+    # Plot the estimated line from linear regression on original data
+    plt.plot(
+        X,
+        y_pred_original,
+        color="blue",
+        linewidth=3,
+        linestyle="dotted",
+        label=f'Original Regression beta_hat ={original_model.coef_}"',
+    )
+
+    plt.xlabel("X")
+    plt.ylabel("y")
+    plt.legend()
+    plt.show()
+
+
 # Generate synthetic data
-size = 1000
+size = 10000
 d = 1
 noise_std = 10
 beta = 20
-epsilon = 100
-X = np.random.randn(size, d)
-y = np.dot(X, beta).reshape(size, 1) + np.random.randn(size, 1) * noise_std
-data = np.concatenate((X, y), axis=1)
+epsilon = 0.5
 
-# Assuming you have implemented the generate_smooth_data function correctly
-private_data = generate_data(
-    data, size, epsilon, method="linear_stat_fit_reg", shuffle=False, rescaling=True
-)
-x_private = private_data[:, 0].reshape(-1, 1)
-y_private = private_data[:, -1]
 
-model = LinearRegression()
-model.fit(x_private, y_private)
-# Predictions
-y_pred = model.predict(x_private)
-
-# Plot original and private data
-plt.scatter(X, y, color="blue", alpha=0.5, label="Original Data")
-plt.scatter(
-    private_data[:, 0], private_data[:, 1], color="red", alpha=0.5, label="Private Data"
-)
-
-# Plot the estimated line from linear regression
-plt.plot(
-    x_private,
-    y_pred,
-    color="green",
-    linewidth=3,
-    label=f'Linear Regression beta_hat ={model.coef_}"',
-)
-
-plt.xlabel("X")
-plt.ylabel("y")
-plt.legend()
-plt.show()
+plot_linear_reg_private(size=size, d=d, noise_std=noise_std, beta=beta, epsilon=epsilon)
 
 
 # %%
+
+
+X, y = make_classification(
+    n_samples=100,
+    n_features=2,
+    n_informative=2,
+    n_redundant=0,
+    n_clusters_per_class=1,
+    class_sep=2,
+    random_state=42,
+)
+
+# Plot the generated data
+plt.figure(figsize=(8, 6))
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, s=50)
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.title("Synthetic 2D Data for SVM Classification")
+plt.show()
+
+
+X.shape
