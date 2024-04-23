@@ -75,21 +75,22 @@ def run_experiment_R2(
             barsabove=True,  # Error bars are drawn above the markers
         )
 
-    plt.xlabel("Size of Initial Database")
+    plt.xlabel("Size of Database")
     plt.ylabel("Mean R2 Score")
     plt.grid()
-    plt.title("Mean R2 Score vs Size of Initial Database with Variance")
+    plt.title(
+        f"Mean R2 Score vs Size of Database with Variance ($\\epsilon={epsilon}$)"
+    )
     plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
     plt.show()
 
 
 # Example usage:
-# methods = ["super_regular_noise","perturbated","smooth", "linear_stat_fit_grid","linear_stat_fit_reg"]
+# methods = ["super_regular_noise","perturbed","smooth", "linear_stat_fit_grid","linear_stat_fit_reg"]
 methods = [
-    "perturbated",
-    "linear_stat_fit_reg",
+    "perturbed",
 ]
-run_experiment_R2(1000, 2, methods, num_trials=1, d=1, beta=[1], shuffle=False)
+run_experiment_R2(1000, 2, methods, num_trials=10, d=1, beta=[1], shuffle=False)
 
 
 # %%

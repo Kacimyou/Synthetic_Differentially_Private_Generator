@@ -5,7 +5,7 @@ from histogram_estimator import generate_data_from_hist, histogram_estimator
 from histogram_DP_mechanism import (
     smooth_histogram,
     perturbed_histogram,
-    generate_perturbated_data,
+    generate_perturbed_data,
     generate_smooth_data,
 )
 from super_regular_noise import phi_bar, psi_bar_j

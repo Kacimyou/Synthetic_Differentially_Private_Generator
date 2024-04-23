@@ -184,7 +184,7 @@ def generate_smooth_data(
     return smoothed_synthetic_data
 
 
-def generate_perturbated_data(
+def generate_perturbed_data(
     X, k, epsilon, adaptative=True, shuffle=True, rescaling=True, verbose=0
 ):
 
@@ -221,11 +221,11 @@ def generate_perturbated_data(
 # # Generate random sample
 # X = np.random.multivariate_normal(mean, covariance_matrix, size=n)
 
-# perturbated = generate_smooth_data(
+# perturbed = generate_smooth_data(
 #     X, k=5000, epsilon=25, adaptative=True, norm="L2", automatic=False
 # )
 
-# # perturbated, hist = generate_perturbated_data(X, k=500, epsilon=0.4, adaptative=True)
+# # perturbed, hist = generate_perturbed_data(X, k=500, epsilon=0.4, adaptative=True)
 
 # plt.scatter(X[:, 0], X[:, 1], alpha=0.5)
-# plt.scatter(perturbated[:, 0], perturbated[:, 1], alpha=0.5)
+# plt.scatter(perturbed[:, 0], perturbed[:, 1], alpha=0.5)

@@ -44,7 +44,7 @@ def histogram_estimator(X, h=0.1, adaptative=True, method=None, verbose=0):
     elif method == "smooth_KS":
         h = n ** (-1 / (d + 6))
 
-    elif method == "perturbated":
+    elif method == "perturbed":
         h = n ** (-1 / (2 + d))
 
     assert 0 < h < 1, "Error: h must be between 0 and 1"
