@@ -122,7 +122,7 @@ def generate_smooth_data(
 
         # Perform histogram estimation
         hist_estimator, rescaling_factors = histogram_estimator(
-            X, adaptative=adaptative, method="smooth_L2"
+            X, adaptative=adaptative, method="smooth_L2", verbose=verbose
         )
 
     if norm == "KS":
@@ -167,7 +167,7 @@ def generate_smooth_data(
 
         # Perform histogram estimation
         hist_estimator, rescaling_factors = histogram_estimator(
-            X, adaptative=adaptative, method="smooth_KS"
+            X, adaptative=adaptative, method="smooth_KS", verbose=verbose
         )
 
     # Generate DP synthetic data by smoothing
@@ -185,13 +185,15 @@ def generate_smooth_data(
 
 
 def generate_perturbated_data(
-    X, k, epsilon, adaptative=True, shuffle=True, rescaling=True
+    X, k, epsilon, adaptative=True, shuffle=True, rescaling=True, verbose=0
 ):
 
     n, d = X.shape
 
     # Perform histogram estimation
-    hist_estimator, rescaling_factors = histogram_estimator(X, adaptative=adaptative)
+    hist_estimator, rescaling_factors = histogram_estimator(
+        X, adaptative=adaptative, verbose=verbose
+    )
 
     # Generate DP synthetic data by perturbation
     DP_hist_perturbed = perturbed_histogram(hist_estimator, epsilon=epsilon, n=n)

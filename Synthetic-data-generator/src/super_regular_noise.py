@@ -289,7 +289,9 @@ def minimize_signed_measure(omega, nu):
         raise ValueError("Optimization failed: " + result.message)
 
 
-def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
+def private_measure_via_random_walk(
+    X, epsilon, adaptative=True, display=False, verbose=0
+):
 
     # Calculate the dimensions of the data
     n, d = X.shape
@@ -302,7 +304,7 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
         bin_per_axis = n
 
     histogram, rescaling_factors = histogram_estimator(
-        X, h=1 / n, adaptative=adaptative
+        X, h=1 / n, adaptative=adaptative, verbose=verbose
     )
 
     privacy_noise = super_regular_noise(bin_per_axis**d, n, epsilon)
@@ -332,11 +334,11 @@ def private_measure_via_random_walk(X, epsilon, adaptative=True, display=False):
 
 
 def generate_super_regular_noise_data(
-    X, k, epsilon, adaptative=True, shuffle=True, rescaling=True
+    X, k, epsilon, adaptative=True, shuffle=True, rescaling=True, verbose=0
 ):
 
     hist, rescaling_factor = private_measure_via_random_walk(
-        X, epsilon, adaptative=adaptative
+        X, epsilon, adaptative=adaptative, verbose=verbose
     )
 
     super_regular_noise_data = generate_data_from_hist(
@@ -362,18 +364,18 @@ def generate_super_regular_noise_data(
 # data = np.random.multivariate_normal(mean, covariance_matrix, size=n)
 # #%%
 
-# beta = np.array([100])
-# d=1
+# beta = np.array([100] * 10)
+# d = 10
 # n = 100
 # noise_std = 0.3
 # X = np.random.randn(n, d)
-# y = np.dot(X,beta).reshape(n,1) + np.random.randn(n, 1) * noise_std
+# y = np.dot(X, beta).reshape(n, 1) + np.random.randn(n, 1) * noise_std
 
 
 # data = np.concatenate((X, y), axis=1)
-# data
+# data.shape
 # # %%
-# private_data = generate_super_regular_noise_data(data, n, 10, shuffle = False)
+# private_data = generate_super_regular_noise_data(data, n, 10, shuffle=False)
 
 
 # plt.scatter(data[:, 0], data[:, 1], alpha=0.5)

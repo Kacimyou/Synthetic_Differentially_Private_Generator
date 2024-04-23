@@ -6,14 +6,20 @@ from super_regular_noise import generate_super_regular_noise_data
 from linear_stat_fit import generate_auto_linear_stat_fit_data
 
 
-def generate_data(X, size, epsilon, method, shuffle=True, rescaling=True):
+def generate_data(X, size, epsilon, method, shuffle=True, rescaling=True, verbose=0):
     if method == "perturbated":
         return generate_perturbated_data(
-            X, size, epsilon, shuffle=shuffle, rescaling=rescaling
+            X, size, epsilon, shuffle=shuffle, rescaling=rescaling, verbose=verbose
         )
     elif method == "smooth":
         return generate_smooth_data(
-            X, size, epsilon, shuffle=shuffle, automatic=True, rescaling=rescaling
+            X,
+            size,
+            epsilon,
+            shuffle=shuffle,
+            automatic=True,
+            rescaling=rescaling,
+            verbose=verbose,
         )
     elif method == "linear_stat_fit_grid":
         return generate_auto_linear_stat_fit_data(
@@ -25,7 +31,7 @@ def generate_data(X, size, epsilon, method, shuffle=True, rescaling=True):
         )
     elif method == "super_regular_noise":
         return generate_super_regular_noise_data(
-            X, size, epsilon, shuffle=shuffle, rescaling=rescaling
+            X, size, epsilon, shuffle=shuffle, rescaling=rescaling, verbose=verbose
         )
     else:
         raise ValueError("Unknown method")
