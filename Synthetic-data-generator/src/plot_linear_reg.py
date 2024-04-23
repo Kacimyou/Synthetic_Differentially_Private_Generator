@@ -1,43 +1,11 @@
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
-from histogram_DP_mechanism import (
-    generate_smooth_data,
-    generate_perturbated_data,
-)
-from super_regular_noise import generate_super_regular_noise_data
-from linear_stat_fit import generate_auto_linear_stat_fit_data
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
-from sklearn.datasets import make_classification
+from generate_dp_data import generate_data
 import scipy.stats
 from tqdm import tqdm
-
-
-def generate_data(X, size, epsilon, method, shuffle=True, rescaling=True):
-    if method == "perturbated":
-        return generate_perturbated_data(
-            X, size, epsilon, shuffle=shuffle, rescaling=rescaling
-        )
-    elif method == "smooth":
-        return generate_smooth_data(
-            X, size, epsilon, shuffle=shuffle, automatic=True, rescaling=rescaling
-        )
-    elif method == "linear_stat_fit_grid":
-        return generate_auto_linear_stat_fit_data(
-            X, size, epsilon, method="classic", shuffle=shuffle, rescaling=rescaling
-        )
-    elif method == "linear_stat_fit_reg":
-        return generate_auto_linear_stat_fit_data(
-            X, size, epsilon, method="linear_reg", shuffle=shuffle, rescaling=rescaling
-        )
-    elif method == "super_regular_noise":
-        return generate_super_regular_noise_data(
-            X, size, epsilon, shuffle=shuffle, rescaling=rescaling
-        )
-    else:
-        raise ValueError("Unknown method")
-
 
 # %%
 
@@ -121,7 +89,7 @@ methods = [
     "perturbated",
     "linear_stat_fit_reg",
 ]
-run_experiment_R2(1000, 2, methods, num_trials=100, d=1, beta=[1], shuffle=False)
+run_experiment_R2(1000, 2, methods, num_trials=1, d=1, beta=[1], shuffle=False)
 
 
 # %%
@@ -270,28 +238,3 @@ epsilon = 0.5
 
 
 plot_linear_reg_private(size=size, d=d, noise_std=noise_std, beta=beta, epsilon=epsilon)
-
-
-# %%
-
-
-X, y = make_classification(
-    n_samples=100,
-    n_features=2,
-    n_informative=2,
-    n_redundant=0,
-    n_clusters_per_class=1,
-    class_sep=2,
-    random_state=42,
-)
-
-# Plot the generated data
-plt.figure(figsize=(8, 6))
-plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, s=50)
-plt.xlabel("Feature 1")
-plt.ylabel("Feature 2")
-plt.title("Synthetic 2D Data for SVM Classification")
-plt.show()
-
-
-X.shape
