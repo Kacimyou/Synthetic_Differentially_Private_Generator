@@ -96,6 +96,18 @@ def rescale(X, rescaling_factors):
     return X_rescaled
 
 
+def bin_private_data(y_private, n_classes):
+    # Calculate bin edges
+    bin_edges = np.linspace(min(y_private), max(y_private), n_classes + 1)
+
+    # Assign each y_private value to a bin interval
+    y_private_binned = (
+        np.digitize(y_private, bin_edges) - 1
+    )  # Subtract 1 to start from 0 index
+    y_private_binned = y_private_binned.reshape((-1, 1))  # Reshape to column vector
+    return y_private_binned
+
+
 # # Test
 # size = 500
 # d = 30
