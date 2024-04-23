@@ -1,8 +1,8 @@
-
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 *.pyc
-Synthetic-data-generator/src/__pycache__/histogram_DP_mechanism.cpython-311.pyc
-Synthetic-data-generator/src/__pycache__/utils.cpython-311.pyc
-Synthetic-data-generator/src/__pycache__/TSP.cpython-311.pyc
-Synthetic-data-generator/src/__pycache__/super_regular_noise.cpython-311.pyc
-Synthetic-data-generator/src/__pycache__/linear_stat_fit.cpython-311.pyc
-Synthetic-data-generator/src/__pycache__/histogram_estimator.cpython-311.pyc
+
+
+
