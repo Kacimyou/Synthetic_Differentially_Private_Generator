@@ -33,5 +33,7 @@ def generate_data(X, size, epsilon, method, shuffle=True, rescaling=True, verbos
         return generate_super_regular_noise_data(
             X, size, epsilon, shuffle=shuffle, rescaling=rescaling, verbose=verbose
         )
+    elif method == "no_privacy":
+        return X
     else:
         raise ValueError("Unknown method")
