@@ -82,18 +82,17 @@ plt.suptitle("Non-Private Scheme: Pairplot of Training Data", y=1.02)
 plt.show()
 # %%
 ## PRIVATE SCHEME #####
-epsilon = 1000
+epsilon = 10
 # Convert DataFrame to numpy array for privacy scheme
-train_data = np.concatenate((X_train.values, y_train.values.reshape(-1, 1)), axis=1)
-test_data = np.concatenate((X_test.values, y_test.values.reshape(-1, 1)), axis=1)
-data = np.concatenate((train_data, test_data), axis=0)
+data = np.concatenate((X.values, y.values.reshape(-1, 1)), axis=1)
 
+# print(data)
 # Generate private version of the training data
 private_data = generate_data(
     data,
     size=len(data),
     epsilon=epsilon,
-    method="perturbated",
+    method="",
     shuffle=False,
     verbose=1,
 )
@@ -103,19 +102,20 @@ private_data_df = pd.DataFrame(private_data, columns=df.columns)
 
 # Post-processing step: Map the target column to its closest integer
 
-private_data_df["target"] = bin_private_data(private_data_df["target"], 3)
+# private_data_df["target"] = bin_private_data(private_data_df["target"], 3)
 
-# print(private_train_df)
 # Split the private training and test data into features (X) and target (y)
 
 
 X_private = private_data_df.drop("target", axis=1)
 y_private = private_data_df["target"]
 
+print(y_private.unique(), np.unique(bin_private_data(y_private, 3)))
+
+
 X_private_train, X_private_test, y_private_train, y_private_test = train_test_split(
     X_private, y_private, test_size=0.2, random_state=42
 )
-
 
 # Define XGBoost model for private scheme
 model_private = xgb.XGBClassifier()
@@ -131,14 +131,9 @@ accuracy_private = accuracy_score(y_private_test, y_private_pred)
 print("Accuracy (Private):", accuracy_private)
 
 
-# Concatenate features and target into a single DataFrame
-df_train = X_private_train.copy()
-df_train["target"] = y_private_train
-
-
-# # Create pairplot
-# sns.pairplot(df_train, hue="target", palette="Set1")
-# plt.suptitle("Non-Private Scheme: Pairplot of Training Data", y=1.02)
-# plt.show()
+# Create pairplot
+sns.pairplot(private_data_df, hue="target", palette="Set1")
+plt.suptitle("Non-Private Scheme: Pairplot of Training Data", y=1.02)
+plt.show()
 
 # %%
