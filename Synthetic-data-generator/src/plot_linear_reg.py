@@ -7,9 +7,21 @@ from generate_dp_data import generate_data
 import scipy.stats
 from tqdm import tqdm
 
+N = 5000
+epsilons = [0.2]
+beta = [1]
+d = 1
+num_trials = 2
+methods = [
+    "super_regular_noise",
+    "perturbed",
+    "smooth",
+    "linear_stat_fit_grid",
+    "linear_stat_fit_reg",
+]
+
+
 # %%
-
-
 def run_experiment_R2(
     N,
     epsilon,
@@ -78,19 +90,15 @@ def run_experiment_R2(
     plt.xlabel("Size of Database")
     plt.ylabel("Mean R2 Score")
     plt.grid()
-    plt.title(
-        f"Mean R2 Score vs Size of Database with Variance ($\\epsilon={epsilon}$)"
-    )
+    plt.title(f"Mean R2 Score vs Size of Database ($\\epsilon={epsilon}$)")
     plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
     plt.show()
 
 
-# Example usage:
-# methods = ["super_regular_noise","perturbed","smooth", "linear_stat_fit_grid","linear_stat_fit_reg"]
-methods = [
-    "perturbed",
-]
-run_experiment_R2(1000, 2, methods, num_trials=10, d=1, beta=[1], shuffle=False)
+for epsilon in epsilons:
+    run_experiment_R2(
+        N, epsilon, methods, num_trials=num_trials, d=d, beta=beta, shuffle=False
+    )
 
 
 # %%
@@ -100,12 +108,15 @@ def run_experiment_beta(
 
     sizes = np.logspace(np.log10(100), np.log10(N), num=10, dtype=int)
 
-    for method in methods:
+    colors = ["tab:blue", "tab:orange", "tab:green", "tab:purple"]
+
+    for i, method in enumerate(methods):
+        print(f"## COMPUTING method = {method} ##")
         mse_scores = []
         stds = []
-        for size in sizes:
+        for size in tqdm(sizes):
             betas = []
-            for _ in range(num_trials):
+            for j in tqdm(range(num_trials)):
 
                 assert (
                     len(beta) == d
@@ -133,10 +144,7 @@ def run_experiment_beta(
 
             # Calculate mean MSE and variance
             bias_beta = np.mean(np.array(betas) - np.array(beta))
-            print(bias_beta)
-
             var_beta = np.var(betas)
-            print(var_beta)
             std = np.std(betas)
             stds.append(std)
             mse_scores.append(bias_beta**2 + var_beta)
@@ -147,39 +155,50 @@ def run_experiment_beta(
             sizes,
             mse_scores,
             yerr=stds,
-            label=f"Method: {method}, Epsilon={epsilon}",
+            label=f"Method: {method}",
             fmt="-o",
             linestyle="-",
+            color=colors[i],
             capsize=3,  # Length of the error bar caps
             capthick=0.5,  # Thickness of the error bar caps
             barsabove=True,  # Error bars are drawn above the markers
         )
 
     plt.xlabel("Size of Initial Database")
-    plt.ylabel("Mean Squared Error (MSE) of Coefficient Estimates")
+    plt.ylabel("Mean Squared Error (MSE) of Coefficient Estimates ")
     plt.grid()
     plt.title(
-        "Mean Squared Error (MSE) of Coefficient Estimates vs Size of Initial Database with Variance"
+        f"MSE of Coefficient Estimates vs Size of Database ($\\epsilon={epsilon}$)"
     )
     plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
     plt.show()
 
 
-methods = ["smooth"]
-run_experiment_beta(1000, 2, methods, num_trials=10, d=1, beta=[10], shuffle=False)
+methods = [
+    "super_regular_noise",
+    "perturbed",
+    "smooth",
+    "linear_stat_fit_reg",
+]
+# methods = ["smooth", "perturbed"]
+for epsilon in epsilons:
+
+    run_experiment_beta(
+        N, epsilon, methods, num_trials=num_trials, d=d, beta=beta, shuffle=False
+    )
 
 
 # %%
 
 
-def plot_linear_reg_private(size, d, noise_std, beta, epsilon):
+def plot_linear_reg_private(size, d, noise_std, beta, epsilon, method):
     X = np.random.randn(size, d)
     y = np.dot(X, beta).reshape(size, 1) + np.random.randn(size, 1) * noise_std
     data = np.concatenate((X, y), axis=1)
 
     # Assuming you have implemented the generate_smooth_data function correctly
     private_data = generate_data(
-        data, size, epsilon, method="super_regular_noise", shuffle=True, rescaling=True
+        data, size, epsilon, method=method, shuffle=True, rescaling=True
     )
     x_private = private_data[:, 0].reshape(-1, 1)
     y_private = private_data[:, -1]
@@ -223,7 +242,7 @@ def plot_linear_reg_private(size, d, noise_std, beta, epsilon):
         linestyle="dotted",
         label=f'Original Regression beta_hat ={original_model.coef_}"',
     )
-
+    plt.title("Linear Regression on DP Synthetic Data and its Non Private input")
     plt.xlabel("X")
     plt.ylabel("y")
     plt.legend()
@@ -231,11 +250,15 @@ def plot_linear_reg_private(size, d, noise_std, beta, epsilon):
 
 
 # Generate synthetic data
-size = 10000
+size = 300
 d = 1
-noise_std = 10
-beta = 20
-epsilon = 0.5
+noise_std = 1
+beta = 5
+epsilon = 2
+method = "perturbed"
 
+plot_linear_reg_private(
+    size=size, d=d, noise_std=noise_std, beta=beta, epsilon=epsilon, method=method
+)
 
-plot_linear_reg_private(size=size, d=d, noise_std=noise_std, beta=beta, epsilon=epsilon)
+# %%
