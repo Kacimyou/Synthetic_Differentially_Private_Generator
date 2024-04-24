@@ -48,7 +48,7 @@ def perturbed_histogram(hist_estimator, epsilon, n):
 
     # Generate Laplace noise for each component
 
-    laplace_noise = np.random.laplace(scale=8 / epsilon**2, size=hist_estimator.shape)
+    laplace_noise = np.random.laplace(scale=2 / epsilon, size=hist_estimator.shape)
 
     # Add Laplace noise to the histogram estimator
     dp_hist = hist_estimator + laplace_noise / n
