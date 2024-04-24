@@ -130,7 +130,7 @@ def generate_smooth_data(
         m = n ** (d / (d + 6))
         if automatic:
             k = int(n ** (4 / (d + 6)))  # k must be int
-            delta = m * k / (n * epsilon)
+            delta = m / ((np.exp(epsilon / k) - 1) * n + m)
             if verbose == 1:
                 print(
                     "Parameters k, delta and m where chosen to meet privacy:\n",
