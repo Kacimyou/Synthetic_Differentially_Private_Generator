@@ -98,7 +98,7 @@ def rescale(X, rescaling_factors):
 
 def bin_private_data(y_private, n_classes):
     # Calculate bin edges
-    bin_edges = np.linspace(min(y_private), max(y_private), n_classes + 1)
+    bin_edges = np.linspace(min(y_private), max(y_private) + 1e-8, n_classes + 1)
 
     # Assign each y_private value to a bin interval
     y_private_binned = (
@@ -108,6 +108,9 @@ def bin_private_data(y_private, n_classes):
     return y_private_binned
 
 
+# y = np.linspace(0, 2.587, 100)
+
+# print(bin_private_data(y, 3))
 # # Test
 # size = 500
 # d = 30
