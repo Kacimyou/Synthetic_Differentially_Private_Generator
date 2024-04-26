@@ -196,7 +196,7 @@ def from_1D_to_multi(one_d_histogram, reverse_dict, shape):
 # %%
 
 
-m = 4
+m = 3
 points = generate_grid_points(m, 2)
 # Set figure size
 plt.gcf().set_size_inches(12, 6)
@@ -237,9 +237,9 @@ def plot_mapping(points, square=False, arrow=True):
                 r"$\mathcal{I}_{%s}$" % (i + 1),
                 (point[0], point[1]),
                 textcoords="offset points",
-                xytext=(-15, -10),
+                xytext=(-20, -15),
                 ha="center",
-                fontsize=8,
+                fontsize=16,
             )
 
     if arrow:
@@ -276,9 +276,9 @@ def plot_mapping(points, square=False, arrow=True):
             r"$\omega_{%s}$" % (i + 1),
             (point[0], point[1]),
             textcoords="offset points",
-            xytext=(10, 3),
+            xytext=(12, 3),
             ha="center",
-            fontsize=8,
+            fontsize=14,
         )
         plt.scatter(tsp_path[i][0], tsp_path[i][1], marker="o", color=colors[i])
 
@@ -309,7 +309,7 @@ def plot_mapping(points, square=False, arrow=True):
             textcoords="offset points",
             xytext=(0, 10),
             ha="center",
-            fontsize=8,
+            fontsize=15,
         )
 
     # Annotate arrows with distance
@@ -320,19 +320,24 @@ def plot_mapping(points, square=False, arrow=True):
 
         plt.text(
             cumulative_distances[i] + dx / 5,
-            0.005 * (-1) ** i,
+            0.007 * (-1) ** i,
             r"$\delta_{%s} = %.2f$" % (i + 1, distance),
             fontsize=8,
         )
-
+        plt.annotate(
+            "",
+            xy=(cumulative_distances[i + 1], 0),
+            xytext=(cumulative_distances[i], 0),
+            arrowprops=dict(arrowstyle="->", color="grey", lw=1.5, mutation_scale=25),
+        )
     plt.xlabel("Path Length")
 
     plt.tight_layout()
     plt.show()
 
 
-uniform = np.random.uniform(0, 1, size=(10, 2))
-# plot_mapping(points, square=False)
+# uniform = np.random.uniform(0, 1, size=(10, 2))
+# plot_mapping(uniform, square=False)
 
 # %%
 
