@@ -8,17 +8,20 @@ import scipy.stats
 from tqdm import tqdm
 
 N = 5000
-epsilons = [0.2]
-beta = [1]
+epsilons = [10]
 d = 1
-num_trials = 2
+beta = [1] * d
+num_trials = 10
 methods = [
     "super_regular_noise",
     "perturbed",
-    "smooth",
+    "smooth_KS",
+    "smooth_L2",
     "linear_stat_fit_grid",
     "linear_stat_fit_reg",
 ]
+
+methods = ["perturbed"]
 
 
 # %%
@@ -82,6 +85,7 @@ def run_experiment_R2(
             label=f"{method}",
             fmt="-o",
             linestyle="-",
+            color="tab:orange",
             capsize=3,  # Length of the error bar caps
             capthick=0.5,  # Thickness of the error bar caps
             barsabove=True,  # Error bars are drawn above the markers
@@ -108,15 +112,18 @@ def run_experiment_beta(
 
     sizes = np.logspace(np.log10(100), np.log10(N), num=10, dtype=int)
 
-    colors = ["tab:blue", "tab:orange", "tab:green", "tab:purple"]
+    # colors = ["tab:blue", "tab:orange", "tab:green", "tab:purple"]
 
     for i, method in enumerate(methods):
         print(f"## COMPUTING method = {method} ##")
         mse_scores = []
         stds = []
+        num_trial = num_trials
+        if method == "smooth_KS":
+            num_trial = 250
         for size in tqdm(sizes):
             betas = []
-            for j in tqdm(range(num_trials)):
+            for j in tqdm(range(num_trial)):
 
                 assert (
                     len(beta) == d
@@ -143,11 +150,12 @@ def run_experiment_beta(
                 betas.append(beta_hat)
 
             # Calculate mean MSE and variance
-            bias_beta = np.mean(np.array(betas) - np.array(beta))
-            var_beta = np.var(betas)
-            std = np.std(betas)
+
+            mean_beta = np.mean(np.array(betas))
+            MSE_beta = (np.array(betas) - mean_beta) ** 2
+            std = np.std(MSE_beta)
             stds.append(std)
-            mse_scores.append(bias_beta**2 + var_beta)
+            mse_scores.append(np.mean(MSE_beta))
 
         stds = np.array(stds) * (scipy.stats.norm.ppf(0.975) / np.sqrt(num_trials))
         # Plot mean MSE scores with variance for each method
@@ -158,7 +166,6 @@ def run_experiment_beta(
             label=f"Method: {method}",
             fmt="-o",
             linestyle="-",
-            color=colors[i],
             capsize=3,  # Length of the error bar caps
             capthick=0.5,  # Thickness of the error bar caps
             barsabove=True,  # Error bars are drawn above the markers
@@ -166,6 +173,7 @@ def run_experiment_beta(
 
     plt.xlabel("Size of Initial Database")
     plt.ylabel("Mean Squared Error (MSE) of Coefficient Estimates ")
+    plt.yscale("log")
     plt.grid()
     plt.title(
         f"MSE of Coefficient Estimates vs Size of Database ($\\epsilon={epsilon}$)"
@@ -174,12 +182,6 @@ def run_experiment_beta(
     plt.show()
 
 
-methods = [
-    "super_regular_noise",
-    "perturbed",
-    "smooth",
-    "linear_stat_fit_reg",
-]
 # methods = ["smooth", "perturbed"]
 for epsilon in epsilons:
 
@@ -262,3 +264,94 @@ plot_linear_reg_private(
 )
 
 # %%
+
+
+def run_experiment_R2_single_method(
+    N,
+    epsilon,
+    method,
+    dimensions,
+    beta=[1],
+    num_trials=10,
+    num_step=10,
+    noise_std=0.2,
+    shuffle=True,
+):
+
+    sizes = np.logspace(np.log10(100), np.log10(N), num=num_step, dtype=int)
+    colors = plt.cm.viridis(np.linspace(0, 1, len(dimensions)))
+
+    for i, d in enumerate(dimensions):
+        print(f"## COMPUTING method = {method}, dimension = {d} ##")
+        mean_r2_scores = []
+        stds = []
+        beta_d = beta * d
+        print(beta_d)
+        for size in tqdm(sizes):
+            r2_scores = []
+            for _ in tqdm(range(num_trials)):
+
+                X = np.random.randn(size, d)
+                y = (
+                    np.dot(X, beta_d).reshape(size, 1)
+                    + np.random.randn(size, 1) * noise_std
+                )
+
+                data = np.concatenate((X, y), axis=1)
+                private_data = generate_data(
+                    data, size, epsilon, method, shuffle=shuffle
+                )
+
+                x = private_data[:, 0].reshape(-1, 1)
+                y = private_data[:, -1]
+
+                # Perform linear regression
+                model = LinearRegression()
+                model.fit(x, y)
+                y_pred = model.predict(x)
+
+                # Compute R2 score
+                r2 = r2_score(y, y_pred)
+                r2_scores.append(r2)
+
+            # Calculate mean R2 score and variance
+            mean_r2 = np.mean(r2_scores)
+            std = np.std(r2_scores)
+            mean_r2_scores.append(mean_r2)
+            stds.append(std)
+
+        stds = np.array(stds) * (scipy.stats.norm.ppf(0.975) / np.sqrt(num_trials))
+        # Plot mean R2 scores with variance for each dimension
+        plt.errorbar(
+            sizes,
+            mean_r2_scores,
+            yerr=stds,
+            label=f"Dimension = {d}",
+            fmt="-o",
+            linestyle="-",
+            color=colors[i],
+            capsize=3,  # Length of the error bar caps
+            capthick=0.5,  # Thickness of the error bar caps
+            barsabove=True,  # Error bars are drawn above the markers
+        )
+
+    plt.xlabel("Size of Database")
+    plt.ylabel("Mean R2 Score")
+    plt.grid()
+    plt.ylim(0, 1)  # Limit y-axis between 0 and 1
+    plt.title(f"Mean R2 Score vs Size of Database ($\\epsilon={epsilon}$)")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.show()
+
+
+# Example usage:
+dimensions = [1, 2, 3, 4]
+run_experiment_R2_single_method(
+    N,
+    epsilon=10,
+    method="perturbed",
+    dimensions=dimensions,
+    num_trials=num_trials,
+    beta=[1],  # Use max dimension for beta
+    shuffle=False,
+)

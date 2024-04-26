@@ -7,14 +7,15 @@ from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score
 from sklearn.datasets import make_blobs
 from tqdm import tqdm
+from utils import bin_private_data
 
-
-# %%
-size = 4000
-epsilon = 0.5
-d = 2
-n_classes = 2
-
+# %%# Parameters
+# Parameters
+size = 300  # Number of samples
+epsilon = 1  # Privacy parameter
+d = 2  # Number of features
+n_classes = 2  # Number of classes
+cluster_std = [1, 1]
 # Generate synthetic data
 X, y = make_blobs(n_samples=size, centers=n_classes, n_features=d)
 data = np.column_stack((X, y))
@@ -23,142 +24,84 @@ data = np.column_stack((X, y))
 private_data = generate_data(
     data, size, epsilon=epsilon, method="perturbed", shuffle=True
 )
-x_private, y_private = private_data[:, :d], np.clip(
-    private_data[:, -1], 0, n_classes - 1
-)
-
-# Fit SVMs
-svm_original, svm_private = SVC(kernel="linear"), SVC(kernel="linear")
-svm_original.fit(X, y)
-svm_private.fit(x_private, np.round(y_private))
-
-# Compute accuracies
-accuracy_original = accuracy_score(y, svm_original.predict(X))
-accuracy_private = accuracy_score(np.round(y_private), svm_private.predict(x_private))
-
-# Plot decision boundaries
-plt.figure(figsize=(12, 5))
-for i, svm, title in zip(
-    [1, 2], [svm_original, svm_private], ["SVM on Original Data", "SVM on Private Data"]
-):
-    plt.subplot(1, 2, i)
-    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, s=50)
-    xlim, ylim = plt.gca().get_xlim(), plt.gca().get_ylim()
-    xx, yy = np.meshgrid(
-        np.linspace(xlim[0], xlim[1], 10), np.linspace(ylim[0], ylim[1], 10)
-    )
-    xy = np.vstack([xx.ravel(), yy.ravel()]).T
-    Z = svm.decision_function(xy).reshape(xx.shape)
-    plt.contour(
-        xx,
-        yy,
-        Z,
-        colors="k",
-        levels=[-1, 0, 1],
-        alpha=0.5,
-        linestyles=["--", "-", "--"],
-    )
-    plt.scatter(
-        svm.support_vectors_[:, 0],
-        svm.support_vectors_[:, 1],
-        s=100,
-        linewidth=1,
-        facecolors="none",
-        edgecolors="k",
-    )
-    plt.title(title)
-    plt.xlabel("Feature 1")
-    plt.ylabel("Feature 2")
-
-plt.tight_layout()
-plt.show()
-
-print("Accuracy of SVM on original data:", accuracy_original)
-print("Accuracy of SVM on private data:", accuracy_private)
-
-# %%
-
-# Define parameters
-size = 120
-epsilon = 2
-d = 2
-n_classes = 3  # Set the number of classes
-
-# Generate synthetic data
-X, y = make_classification(
-    n_samples=size,
-    n_features=2,
-    n_classes=n_classes,
-    n_informative=2,
-    n_redundant=0,
-    n_clusters_per_class=1,
-    class_sep=3,
-)
-y = y.reshape((len(y), 1))
-data = np.concatenate((X, y), axis=1)
-
-private_data = generate_data(
-    data, size, epsilon=epsilon, method="perturbated", shuffle=True, verbose=True
-)
-x_private = private_data[:, :d]
-y_private = private_data[:, -1]
-
-# Calculate bin edges
-bin_edges = np.linspace(min(y_private), max(y_private), n_classes + 1)
-
-# Assign each y_private value to a bin interval
-y_private_binned = (
-    np.digitize(y_private, bin_edges) - 1
-)  # Subtract 1 to start from 0 index
-y_private_binned = y_private_binned.reshape((len(y), 1))
-
-# Fit SVM on original data
-svm_original = SVC(kernel="linear")
-svm_original.fit(X, y.flatten())
+x_private, y_private = private_data[:, :d], bin_private_data(private_data[:, -1], 2)
 
 # Fit SVM on private data
 svm_private = SVC(kernel="linear")
-svm_private.fit(x_private, y_private_binned.flatten())
+svm_private.fit(x_private, np.round(y_private))
 
-# Compute accuracy for both SVMs
-accuracy_original = accuracy_score(y, svm_original.predict(X))
-accuracy_private = accuracy_score(y_private_binned, svm_private.predict(x_private))
+# Compute accuracies
+accuracy_private = accuracy_score(np.round(y_private), svm_private.predict(x_private))
+accuracy_original = accuracy_score(y, svm_private.predict(X))
 
-print("Accuracy of SVM on original data:", accuracy_original)
-print("Accuracy of SVM on private data:", accuracy_private)
+# Plot decision boundaries
+plt.figure(figsize=(12, 5))
 
-# Determine color limits
-color_min = min(y.flatten())
-color_max = max(y.flatten())
-
-# Plotting without color bar
-plt.figure(figsize=(12, 6))
-
-# Scatter plot of original data
+# Plot decision boundary on original data
 plt.subplot(1, 2, 1)
-plt.scatter(
-    X[:, 0], X[:, 1], c=y.flatten(), cmap=plt.cm.Paired, vmin=color_min, vmax=color_max
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, s=50)
+xlim, ylim = plt.gca().get_xlim(), plt.gca().get_ylim()
+xx, yy = np.meshgrid(
+    np.linspace(xlim[0], xlim[1], 10), np.linspace(ylim[0], ylim[1], 10)
 )
-plt.title("Original Data")
+xy = np.vstack([xx.ravel(), yy.ravel()]).T
+Z = svm_private.decision_function(xy).reshape(xx.shape)
+plt.contour(
+    xx,
+    yy,
+    Z,
+    colors="k",
+    levels=[-1, 0, 1],
+    alpha=0.5,
+    linestyles=["--", "-", "--"],
+)
+plt.scatter(
+    svm_private.support_vectors_[:, 0],
+    svm_private.support_vectors_[:, 1],
+    s=100,
+    linewidth=1,
+    facecolors="none",
+    edgecolors="k",
+)
+plt.title("Decision Boundary on Original Data")
 plt.xlabel("Feature 1")
 plt.ylabel("Feature 2")
 
-# Scatter plot of private data
+# Plot decision boundary on private data
 plt.subplot(1, 2, 2)
-plt.scatter(
-    x_private[:, 0],
-    x_private[:, 1],
-    c=y_private_binned,
-    cmap=plt.cm.Paired,
-    vmin=color_min,
-    vmax=color_max,
+plt.scatter(x_private[:, 0], x_private[:, 1], c=y_private, cmap=plt.cm.Paired, s=50)
+xlim, ylim = plt.gca().get_xlim(), plt.gca().get_ylim()
+xx, yy = np.meshgrid(
+    np.linspace(xlim[0], xlim[1], 10), np.linspace(ylim[0], ylim[1], 10)
 )
-plt.title("Private Data")
+xy = np.vstack([xx.ravel(), yy.ravel()]).T
+Z = svm_private.decision_function(xy).reshape(xx.shape)
+plt.contour(
+    xx,
+    yy,
+    Z,
+    colors="k",
+    levels=[-1, 0, 1],
+    alpha=0.5,
+    linestyles=["--", "-", "--"],
+)
+plt.scatter(
+    svm_private.support_vectors_[:, 0],
+    svm_private.support_vectors_[:, 1],
+    s=100,
+    linewidth=1,
+    facecolors="none",
+    edgecolors="k",
+)
+plt.title("Decision Boundary on Private Data")
 plt.xlabel("Feature 1")
 plt.ylabel("Feature 2")
 
 plt.tight_layout()
 plt.show()
+
+print("Accuracy of SVM on private data:", accuracy_private)
+print("Accuracy of SVM on original data:", accuracy_original)
 
 # %%
 
@@ -167,64 +110,232 @@ def run_experiment_accuracy(
     N, methods, epsilon, num_trials=10, d=2, num_step=10, n_classes=2
 ):
     sizes = np.logspace(np.log10(100), np.log10(N), num=num_step, dtype=int)
-    accuracies = {method: [] for method in methods}
+    private_accuracies = {method: [] for method in methods}
+    original_accuracies = {method: [] for method in methods}
+    private_svm = SVC(kernel="linear")
 
     for method in methods:
         print(f"## COMPUTING method = {method} ##")
         for size in tqdm(sizes):
-            accuracy_trials = []
+            private_accuracy_trials = []
+            original_accuracy_trials = []
             for _ in range(num_trials):
-                X, y = make_blobs(n_samples=size, centers=n_classes, n_features=d)
+                X_original, y_original = make_blobs(
+                    n_samples=size, centers=n_classes, n_features=d, random_state=None
+                )
+
+                # Training on private data
                 private_data = generate_data(
-                    np.column_stack((X, y)),
+                    np.column_stack((X_original, y_original)),
                     size,
                     epsilon=epsilon,
                     method=method,
                     shuffle=True,
                 )
-                x_private, y_private = private_data[:, :d], np.clip(
-                    private_data[:, -1], 0, n_classes - 1
+                x_private, y_private = private_data[:, :d], bin_private_data(
+                    private_data[:, -1], 2
                 )
+                y_private = np.ravel(y_private)
 
-                svm_private = SVC(kernel="linear")
-                svm_private.fit(x_private, np.round(y_private))
-                accuracy_private = accuracy_score(y, svm_private.predict(X))
+                private_svm.fit(x_private, np.round(y_private))
+                accuracy_private = accuracy_score(
+                    y_private, private_svm.predict(x_private)
+                )
+                private_accuracy_trials.append(accuracy_private)
 
-                accuracy_trials.append(accuracy_private)
+                # Computing accuracy on non-private data
+                accuracy_original = accuracy_score(
+                    y_original, private_svm.predict(X_original)
+                )
+                original_accuracy_trials.append(accuracy_original)
 
-            mean_accuracy = np.mean(accuracy_trials)
-            std_accuracy = np.std(accuracy_trials)
-            accuracies[method].append((mean_accuracy, std_accuracy))
+            mean_private_accuracy = np.mean(private_accuracy_trials)
+            std_private_accuracy = np.std(private_accuracy_trials) / np.sqrt(num_trials)
+            private_accuracies[method].append(
+                (mean_private_accuracy, std_private_accuracy)
+            )
 
+            mean_original_accuracy = np.mean(original_accuracy_trials)
+            std_original_accuracy = np.std(original_accuracy_trials) / np.sqrt(
+                num_trials
+            )
+            original_accuracies[method].append(
+                (mean_original_accuracy, std_original_accuracy)
+            )
+
+    # Plotting for private data
     plt.figure(figsize=(10, 6))
-    for method, accuracy_list in accuracies.items():
+    for method, accuracy_list in private_accuracies.items():
         mean_acc = [x[0] for x in accuracy_list]
         std_acc = [x[1] for x in accuracy_list]
         plt.errorbar(
             sizes,
             mean_acc,
             yerr=std_acc,
-            label=f"Method = {method}",
+            label=f"{method}",
             fmt="-o",
             capsize=3,
         )
     plt.xlabel("Size of Dataset")
     plt.ylabel("Accuracy")
-    plt.title("Accuracy vs Size of Dataset ($\\epsilon={epsilon}$)")
+    plt.title(f"Accuracy on Private Data vs Size of Dataset ($\\epsilon={epsilon}$)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    # Plotting for original data using private SVM
+    plt.figure(figsize=(10, 6))
+    for method, accuracy_list in original_accuracies.items():
+        mean_acc = [x[0] for x in accuracy_list]
+        std_acc = [x[1] for x in accuracy_list]
+        plt.errorbar(
+            sizes,
+            mean_acc,
+            yerr=std_acc,
+            label=f"{method}",
+            fmt="-o",
+            capsize=3,
+        )
+    plt.xlabel("Size of Dataset")
+    plt.ylabel("Accuracy")
+    plt.title(f"Accuracy on Original Data Using Private SVM ($\\epsilon={epsilon}$)")
     plt.legend()
     plt.grid(True)
     plt.show()
 
 
 # Define parameters
-N = 5000
-epsilon = 1
-num_trials = 10
-methods = ["smooth", "perturbed"]
+N = 2000
+epsilons = [0.1, 1, 10]
+num_trials = 100
+methods = [
+    "super_regular_noise",
+    "perturbed",
+    "smooth_KS",
+    "smooth_L2",
+    "linear_stat_fit_grid",
+]
+
+
 d = 2
+n_classes = 2
+for epsilon in epsilons:
+    # Run experiment
+    run_experiment_accuracy(
+        N, methods, epsilon=epsilon, num_trials=num_trials, d=d, n_classes=n_classes
+    )
+
+
+# %%
+def run_experiment_accuracy_single_method(
+    N, method, dimensions, epsilon, num_trials=10, num_step=10, n_classes=2
+):
+    sizes = np.logspace(np.log10(100), np.log10(N), num=num_step, dtype=int)
+    colors = plt.cm.viridis(np.linspace(0, 1, len(dimensions)))
+
+    private_svm = SVC(kernel="linear")
+
+    private_accuracies_all = []
+    original_accuracies_all = []
+
+    for i, d in enumerate(dimensions):
+        print(f"## COMPUTING method = {method}, dimension = {d} ##")
+        private_accuracies = []
+        original_accuracies = []
+        for size in tqdm(sizes):
+            private_accuracy_trials = []
+            original_accuracy_trials = []
+            for _ in range(num_trials):
+                X_original, y_original = make_blobs(
+                    n_samples=size, centers=n_classes, n_features=d, random_state=None
+                )
+
+                # Training on private data
+                private_data = generate_data(
+                    np.column_stack((X_original, y_original)),
+                    size,
+                    epsilon=epsilon,
+                    method=method,
+                    shuffle=True,
+                )
+                x_private, y_private = private_data[:, :d], bin_private_data(
+                    private_data[:, -1], 2
+                )
+                y_private = np.ravel(y_private)
+
+                private_svm.fit(x_private, np.round(y_private))
+                accuracy_private = accuracy_score(
+                    y_private, private_svm.predict(x_private)
+                )
+                private_accuracy_trials.append(accuracy_private)
+
+                # Computing accuracy on non-private data
+                accuracy_original = accuracy_score(
+                    y_original, private_svm.predict(X_original)
+                )
+                original_accuracy_trials.append(accuracy_original)
+
+            mean_private_accuracy = np.mean(private_accuracy_trials)
+            std_private_accuracy = np.std(private_accuracy_trials) / np.sqrt(num_trials)
+            private_accuracies.append((mean_private_accuracy, std_private_accuracy))
+
+            mean_original_accuracy = np.mean(original_accuracy_trials)
+            std_original_accuracy = np.std(original_accuracy_trials) / np.sqrt(
+                num_trials
+            )
+            original_accuracies.append((mean_original_accuracy, std_original_accuracy))
+
+        private_accuracies_all.append(private_accuracies)
+        original_accuracies_all.append(original_accuracies)
+
+    # Plotting for private data
+    plt.figure(figsize=(10, 6))
+    for i, d in enumerate(dimensions):
+        plt.errorbar(
+            sizes,
+            [x[0] for x in private_accuracies_all[i]],
+            yerr=[x[1] for x in private_accuracies_all[i]],
+            label=f"Dimension={d})",
+            fmt="-o",
+            capsize=3,
+            color=colors[i],
+        )
+    plt.xlabel("Size of Dataset")
+    plt.ylabel("Accuracy")
+    plt.title(f"Accuracy on Private Data vs Size of Dataset ($\\epsilon={epsilon}$)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    # Plotting for original data using private SVM
+    plt.figure(figsize=(10, 6))
+    for i, d in enumerate(dimensions):
+        plt.errorbar(
+            sizes,
+            [x[0] for x in original_accuracies_all[i]],
+            yerr=[x[1] for x in original_accuracies_all[i]],
+            label=f"Dimension={d})",
+            fmt="-o",
+            capsize=3,
+            color=colors[i],
+        )
+    plt.xlabel("Size of Dataset")
+    plt.ylabel("Accuracy")
+    plt.title(f"Accuracy on Original Data Using Private SVM ($\\epsilon={epsilon}$)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+# Define parameters
+N = 10000
+epsilon = 10
+num_trials = 10
+method = "perturbed"
+dimensions = [6, 7, 8]  # Add dimensions you want to test
 n_classes = 2
 
 # Run experiment
-run_experiment_accuracy(
-    N, methods, epsilon=epsilon, num_trials=num_trials, d=d, n_classes=n_classes
+run_experiment_accuracy_single_method(
+    N, method, dimensions, epsilon=epsilon, num_trials=num_trials, n_classes=n_classes
 )
