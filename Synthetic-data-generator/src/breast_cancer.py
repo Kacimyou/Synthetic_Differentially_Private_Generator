@@ -13,7 +13,7 @@ from sklearn.datasets import load_iris
 import seaborn as sns
 from utils import bin_private_data
 
-# %%
+
 #### IMPORT DATA #####
 data = load_iris()
 # Create DataFrame
@@ -30,6 +30,7 @@ iris = load_iris()
 iris_df = pd.DataFrame(data=iris.data, columns=iris.feature_names)
 iris_df["target"] = iris.target
 
+# %%
 # Number of bootstrap samples to generate
 num_bootstrap_samples = 50
 
@@ -82,7 +83,7 @@ plt.suptitle("Non-Private Scheme: Pairplot of Training Data", y=1.02)
 plt.show()
 # %%
 ## PRIVATE SCHEME #####
-epsilon = 10
+epsilon = 1000
 # Convert DataFrame to numpy array for privacy scheme
 data = np.concatenate((X.values, y.values.reshape(-1, 1)), axis=1)
 
@@ -92,7 +93,7 @@ private_data = generate_data(
     data,
     size=len(data),
     epsilon=epsilon,
-    method="",
+    method="super_regular_noise",
     shuffle=False,
     verbose=1,
 )
@@ -101,6 +102,7 @@ private_data = generate_data(
 private_data_df = pd.DataFrame(private_data, columns=df.columns)
 
 # Post-processing step: Map the target column to its closest integer
+
 
 # private_data_df["target"] = bin_private_data(private_data_df["target"], 3)
 
@@ -113,22 +115,22 @@ y_private = private_data_df["target"]
 print(y_private.unique(), np.unique(bin_private_data(y_private, 3)))
 
 
-X_private_train, X_private_test, y_private_train, y_private_test = train_test_split(
-    X_private, y_private, test_size=0.2, random_state=42
-)
+# X_private_train, X_private_test, y_private_train, y_private_test = train_test_split(
+#     X_private, y_private, test_size=0.2, random_state=42
+# )
 
-# Define XGBoost model for private scheme
-model_private = xgb.XGBClassifier()
+# # Define XGBoost model for private scheme
+# model_private = xgb.XGBClassifier()
 
-# Fit the model with private training data
-model_private.fit(X_private_train, y_private_train)
+# # Fit the model with private training data
+# model_private.fit(X_private_train, y_private_train)
 
-# Make predictions on private test data
-y_private_pred = model_private.predict(X_private_test)
+# # Make predictions on private test data
+# y_private_pred = model_private.predict(X_private_test)
 
-# Evaluate accuracy of the private model
-accuracy_private = accuracy_score(y_private_test, y_private_pred)
-print("Accuracy (Private):", accuracy_private)
+# # Evaluate accuracy of the private model
+# accuracy_private = accuracy_score(y_private_test, y_private_pred)
+# print("Accuracy (Private):", accuracy_private)
 
 
 # Create pairplot
