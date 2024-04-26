@@ -230,13 +230,22 @@ def generate_auto_linear_stat_fit_data(
     )  # m is calculated with the formula of histogram estimation
     # print("m=", m)
     if method == "classic":
-
         # Generate test functions
         test_functions = generate_bin_check_functions(m, d)
 
+        p = int((np.log(m**d) + 0.577) * m**d)
+        # p = m**d
         # Generate reduced space
-        reduced_space = sample_from_grid(m, d, m**d)
-        # print("reduced_space", reduced_space)
+        reduced_space = sample_from_grid(m, d, p)
+        # print(
+        #     "reduced_space",
+        #     reduced_space,
+        #     "m",
+        #     m,
+        #     "m**d",
+        #     m**d,
+        #     len(np.unique(reduced_space, axis = 0))
+        # )
 
     if method == "grid_noid":
 
@@ -256,6 +265,15 @@ def generate_auto_linear_stat_fit_data(
         # Generate reduced space
         reduced_space = generate_grid_points(m, d)
         # print("reduced_space", reduced_space)
+        # print(
+        #     "reduced_space",
+        #     reduced_space,
+        #     "m",
+        #     m,
+        #     "m**d",
+        #     m**d,
+        #     len(np.unique(reduced_space, axis = 0))
+        # )
 
     if method == "linear_reg":
 
@@ -269,11 +287,20 @@ def generate_auto_linear_stat_fit_data(
             lambda x: x[0] ** 2,
             lambda x: x[1] ** 2,
         ]
-
+        # p = int((np.log(m**d) + 0.577)*m**d)
+        p = m**d
         # Generate reduced space
 
-        reduced_space = sample_from_grid(m, d, m**d)
-
+        reduced_space = sample_from_grid(m, d, p)
+        # print(
+        #     "reduced_space",
+        #     reduced_space,
+        #     "m",
+        #     m,
+        #     "m**d",
+        #     m**d,
+        #     len(np.unique(reduced_space, axis = 0))
+        # )
     F = len(test_functions)
     sigma = get_sigma_from_epsilon(epsilon=epsilon, n=n, F=F, gamma=gamma)
 
@@ -302,9 +329,9 @@ def generate_auto_linear_stat_fit_data(
 
 # %%
 
-# n = 2000
+# n = 500
 # d = 4
-# epsilon = 2
+# epsilon = 5
 # k = 2000  # Example number of synthetic data points
 
 # mean = [0, 1]
@@ -316,26 +343,11 @@ def generate_auto_linear_stat_fit_data(
 
 
 # synthetic_data = generate_auto_linear_stat_fit_data(
-#     X, k, epsilon, method="linear_reg", add=False, shuffle=True
+#     X, k, epsilon, method="classic", add=False, shuffle=True, rescaling=False
 # )
 
 # # plt.scatter(X[:, 0], X[:,1])
 # plt.scatter(scale(X[:, 0])[0], scale(X[:, 1])[0], alpha=0.5)
 # plt.scatter(synthetic_data[:, 0], synthetic_data[:, 1], alpha=0.5)
 
-
-# # %%
-# scale_x = scale(X)[0]
-
-# print(
-#     np.corrcoef(scale_x[:, 0], scale_x[:, 1]),
-#     np.corrcoef(synthetic_data[:, 0], synthetic_data[:, 1]),
-#     np.mean(scale_x[:, 0]),
-#     np.mean(scale_x[:, 1]),
-#     np.mean(synthetic_data[:, 0]),
-#     np.mean(synthetic_data[:, 1]),
-#     np.std(scale_x[:, 0]),
-#     np.std(scale_x[:, 1]),
-#     np.std(synthetic_data[:, 0]),
-#     np.std(synthetic_data[:, 1]),
-# )
+# %%
