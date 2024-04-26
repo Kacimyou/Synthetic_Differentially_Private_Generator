@@ -27,8 +27,7 @@ Randomized response is a technique used to introduce randomness into survey resp
 - **Implementation Complexity**: Implementing differential privacy mechanisms can be challenging and require expertise in both privacy and data analysis.
 
 
-
-  ## Differentially Private Synthetic Data
+## Algorithms Used
   
   The algorithms used to generate this synthetic data are taken from:
 - [4] L. Wasserman and S. Zhou. [A statistical framework for differential privacy](https://arxiv.org/pdf/0811.2501.pdf). Journal of the American Statistical Association, pages 375–389, 2010.
@@ -38,4 +37,5 @@ Randomized response is a technique used to introduce randomness into survey resp
 - [6] M. Boedihardjo, T. Strohmer, and R. Vershynin. [Private measures, random walks, and synthetic data](https://arxiv.org/pdf/2204.09167.pdf). arXiv preprint arXiv:2204.09167, 2022.
 
 # Results
+
 
