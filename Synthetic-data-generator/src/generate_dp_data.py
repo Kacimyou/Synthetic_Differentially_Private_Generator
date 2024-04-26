@@ -11,7 +11,7 @@ def generate_data(X, size, epsilon, method, shuffle=True, rescaling=True, verbos
         return generate_perturbed_data(
             X, size, epsilon, shuffle=shuffle, rescaling=rescaling, verbose=verbose
         )
-    elif method == "smooth":
+    elif method == "smooth_KS":
         return generate_smooth_data(
             X,
             size,
@@ -20,6 +20,18 @@ def generate_data(X, size, epsilon, method, shuffle=True, rescaling=True, verbos
             automatic=True,
             rescaling=rescaling,
             verbose=verbose,
+            norm="KS",
+        )
+    elif method == "smooth_L2":
+        return generate_smooth_data(
+            X,
+            size,
+            epsilon,
+            shuffle=shuffle,
+            automatic=True,
+            rescaling=rescaling,
+            verbose=verbose,
+            norm="L2",
         )
     elif method == "linear_stat_fit_grid":
         return generate_auto_linear_stat_fit_data(
